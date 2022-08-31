@@ -1,6 +1,6 @@
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from user.models import User
-from App.models import ChatRoom, Messages
+from App.models import ChatRoom, PrivateMessage
 from asgiref.sync import sync_to_async, async_to_sync
 
 
@@ -33,10 +33,10 @@ class AppChatConsumer(AsyncJsonWebsocketConsumer):
             })
         if command == 'private_chat':
             if content.get('reply_id'):
-                self.reply = await sync_to_async(Messages.objects.get)(id=content.get('reply_id'), room=self.chat_room)
-                self.newmsg = await sync_to_async(Messages.objects.create)(room=self.chat_room, sender=self.me, msg=message, reply=self.reply)
+                self.reply = await sync_to_async(PrivateMessage.objects.get)(id=content.get('reply_id'), room=self.chat_room)
+                self.newmsg = await sync_to_async(PrivateMessage.objects.create)(room=self.chat_room, sender=self.me, msg=message, reply=self.reply)
             else:
-                self.newmsg = await sync_to_async(Messages.objects.create)(room=self.chat_room, sender=self.me,
+                self.newmsg = await sync_to_async(PrivateMessage.objects.create)(room=self.chat_room, sender=self.me,
                                                                            msg=message)
             data = {
                 'type': 'websocket_private_chat',
