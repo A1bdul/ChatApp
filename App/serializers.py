@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from user.serializers import UserLessInfoSerializer
-from .models import ChatRoom, Messages
+from .models import ChatRoom, PrivateMessage
 
 
 class ChatRoomSerializers(serializers.ModelSerializer):
@@ -16,7 +16,7 @@ class ChatRoomSerializers(serializers.ModelSerializer):
 
     def get_unread(self, obj):
         if isinstance(obj, ChatRoom):
-            return Messages.objects.filter(room=obj, read=True).count()
+            return PrivateMessage.objects.filter(room=obj, read=True).count()
 
 
 class AlbumSerializer(serializers.RelatedField):
@@ -39,7 +39,7 @@ class RoomMessageSerializers(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
 
     class Meta:
-        model = Messages
+        model = PrivateMessage
         fields = [
             'sender', 'id', 'msg', 'reply', 'created_at', 'images', 'files', 'dropdown'
         ]
