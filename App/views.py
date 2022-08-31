@@ -32,16 +32,18 @@ def api_room_view(request):
 def api_room_messages(request, username):
     user2 = User.objects.get(username=username)
     room = ChatRoom.objects.filter(Q(user1=request.user, user2=user2) | Q(user2=request.user, user1=user2)).first()
-    messages = PrivateMessage.manage.get_queryset(room)
+    messages = PrivateMessage.manage.get_queryset(room=room)
     instance = RoomMessageSerializers(messages, many=True)
     return Response(instance.data)
+
 
 @api_view(['GET'])
 def api_all_rooms(request):
     user = request.user
     all_rooms = namedtuple('RoomType', ['private_chat', 'group_chat'])
     rooms = all_rooms(
-        private_chat=ChatRoom.objects.filter(Q(user1=user) | Q(user2=user)), group_chat=Group.objects.filter(members__participant=user)
+        private_chat=ChatRoom.objects.filter(Q(user1=user) | Q(user2=user)),
+        group_chat=Group.objects.filter(members__participant=user)
     )
-    instance = HomeFeedSerializers(rooms, many=True).data
+    instance = HomeFeedSerializers(rooms).data
     return Response(instance)

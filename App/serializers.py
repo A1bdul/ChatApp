@@ -3,6 +3,9 @@ from user.serializers import UserLessInfoSerializer
 from .models import ChatRoom, PrivateMessage, GroupMessages, Group, Member
 
 
+# All User Information used will be serialized by the UserLessInfoSerializer,
+# This is already defined to give only minimum info about the user needed
+
 class ChatRoomSerializers(serializers.ModelSerializer):
     unread = serializers.SerializerMethodField(read_only=True)
     user1 = UserLessInfoSerializer(read_only=True)
@@ -20,6 +23,10 @@ class ChatRoomSerializers(serializers.ModelSerializer):
 
 
 class MemberSerializer(serializers.ModelSerializer):
+    """
+        Serialize group chat members information, will be used in other  class
+        serializers
+    """
     participant = UserLessInfoSerializer(read_only=True)
 
     class Meta:
@@ -37,6 +44,7 @@ class GroupRoomSerializer(serializers.ModelSerializer):
         fields = [
             'members', 'name', 'icon'
         ]
+
 
 class AlbumSerializer(serializers.RelatedField):
     def to_representation(self, value):

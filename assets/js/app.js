@@ -41,11 +41,12 @@
             let avatar = main.avatar ? main.avatar : '/assets/images/users/img.png'
             document.querySelectorAll('.user-image').forEach(link => link.src = avatar)
             document.querySelectorAll('.user-about').forEach(link => link.innerHTML = main.about)
-            fetch('/api-room-view', {
+            fetch('/api/all-room', {
                 method: 'GET'
             })
                 .then(r => r.json())
-                .then(rooms => {
+                .then(room => {
+                    let rooms = room.private_chat;
                     document.getElementById("empty-conversation").style.display = "block";
                     for (const user in rooms) {
                         const is_user = (main.username !== rooms[user]['user1'].username) ? rooms[user]['user1'] : rooms[user]['user2'];
@@ -312,7 +313,8 @@
                             connectSocket(is_user.username, main.username)
                         })
                     })
-                })
+                }
+                )
         })
 
   function F() {
