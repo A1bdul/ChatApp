@@ -38,7 +38,6 @@ class MessageManager(models.Manager):
         return super(MessageManager, self).get_queryset().filter(room=room)
 
 
-
 class Album(models.Model):
     images = models.URLField()
 

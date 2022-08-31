@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from user.serializers import UserLessInfoSerializer
-from .models import ChatRoom, PrivateMessage
+from .models import ChatRoom, PrivateMessage, GroupMessages, Group, Member
 
 
 class ChatRoomSerializers(serializers.ModelSerializer):
@@ -18,6 +18,25 @@ class ChatRoomSerializers(serializers.ModelSerializer):
         if isinstance(obj, ChatRoom):
             return PrivateMessage.objects.filter(room=obj, read=True).count()
 
+
+class MemberSerializer(serializers.ModelSerializer):
+    participant = UserLessInfoSerializer(read_only=True)
+
+    class Meta:
+        model = Member
+        fields = [
+            'participant', 'is_admin'
+        ]
+
+
+class GroupRoomSerializer(serializers.ModelSerializer):
+    members = MemberSerializer(many=True)
+
+    class Meta:
+        model = Group
+        fields = [
+            'members', 'name', 'icon'
+        ]
 
 class AlbumSerializer(serializers.RelatedField):
     def to_representation(self, value):
@@ -43,3 +62,8 @@ class RoomMessageSerializers(serializers.Serializer):
         fields = [
             'sender', 'id', 'msg', 'reply', 'created_at', 'images', 'files', 'dropdown'
         ]
+
+
+class HomeFeedSerializers(serializers.Serializer):
+    private_chat = ChatRoomSerializers(many=True)
+    group_chat = GroupRoomSerializer(many=True)

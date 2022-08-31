@@ -10,9 +10,10 @@ from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from App.models import ChatRoom, PrivateMessage
-from App.serializers import ChatRoomSerializers, RoomMessageSerializers
+from App.models import ChatRoom, PrivateMessage, Group
+from App.serializers import ChatRoomSerializers, RoomMessageSerializers, HomeFeedSerializers
 from user.models import User
+from collections import namedtuple
 
 
 def home_view(request):
@@ -34,3 +35,13 @@ def api_room_messages(request, username):
     messages = PrivateMessage.manage.get_queryset(room)
     instance = RoomMessageSerializers(messages, many=True)
     return Response(instance.data)
+
+@api_view(['GET'])
+def api_all_rooms(request):
+    user = request.user
+    all_rooms = namedtuple('RoomType', ['private_chat', 'group_chat'])
+    rooms = all_rooms(
+        private_chat=ChatRoom.objects.filter(Q(user1=user) | Q(user2=user)), group_chat=Group.objects.filter(members__participant=user)
+    )
+    instance = HomeFeedSerializers(rooms, many=True).data
+    return Response(instance)
