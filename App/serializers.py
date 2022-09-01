@@ -38,12 +38,15 @@ class MemberSerializer(serializers.ModelSerializer):
 
 class GroupRoomSerializer(serializers.ModelSerializer):
     members = MemberSerializer(many=True)
-
+    messagecount = serializers.SerializerMethodField()
     class Meta:
         model = Group
         fields = [
-            'members', 'name', 'icon'
+            'members', 'name', 'icon', 'id'
         ]
+
+    def get_messagecount(self, value):
+        return GroupMessages.objects.filter(room__in=value).count()
 
 
 class AlbumSerializer(serializers.RelatedField):

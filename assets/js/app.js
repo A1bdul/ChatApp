@@ -46,7 +46,8 @@
             })
                 .then(r => r.json())
                 .then(room => {
-                    let rooms = room.private_chat;
+                    let rooms = room.private_chat,
+                        group_chat = room.group_chat
                     document.getElementById("empty-conversation").style.display = "block";
                     for (const user in rooms) {
                         const is_user = (main.username !== rooms[user]['user1'].username) ? rooms[user]['user1'] : rooms[user]['user2'];
@@ -76,7 +77,30 @@
                             );
                         }
                     }
+                    for (const chat in group_chat){
+                        if (group_chat.hasOwnProperty(chat)){
+                            let e = group_chat[chat]
+                            var a = e.messagecount
+              ? '<div class="flex-shrink-0 ms-2"><span class="badge badge-soft-dark rounded p-1">' +
+                e.messagecount +
+                "</span></div>"
+              : "",
+            s = e.messagecount
+              ? '<a href="javascript: void(0);" class="unread-msg-user">'
+              : '<a href="javascript: void(0);">';
+          document.getElementById("channelList").innerHTML +=
+            '<li id="contact-id-' +
+            e.id +
+            '" data-name="channel">                ' +
+            s +
+            '                     <div class="d-flex align-items-center">                        <div class="flex-shrink-0 avatar-xs me-2">                            <span class="avatar-title rounded-circle bg-soft-light text-dark">#</span>                        </div>                        <div class="flex-grow-1 overflow-hidden">                            <p class="text-truncate mb-0">' +
+            e.name +
+            "</p>                        </div>                        <div>" +
+            a +
+            "</div>                        </div>                </a>            </li>";
 
+                        }
+                    }
                     window.addEventListener("DOMContentLoaded", function () {
                         let e = document.querySelector(
                             "#chat-conversation .simplebar-content-wrapper"
