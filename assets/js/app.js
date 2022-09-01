@@ -635,3 +635,12 @@ function f() {
 function F() {
     GLightbox({selector: ".popup-img", title: !1});
 }
+//
+// <div className="replymessage-block mb-0 d-flex align-items-start">
+//     <div className="flex-grow-1"><h5 className="conversation-name">Bella Cote</h5>                            <p
+//         className="mb-0">Hey, I'm going to meet a friend of mine at the department store. I have to buy some presents
+//         for my parents 🎁.</p></div>
+//     <div className="flex-shrink-0">
+//         <button type="button" className="btn btn-sm btn-link mt-n2 me-n3 font-size-18"></button>
+//     </div>
+// </div>
