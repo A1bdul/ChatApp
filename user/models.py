@@ -59,8 +59,8 @@ class User(AbstractUser):
     bio = models.TextField(blank=True, default="")
     avatar = models.ImageField(blank=True, null=True, upload_to='avatars')
     cover_image = models.ImageField(blank=True, null=True, upload_to='cover_image')
-    contacts = models.ManyToManyField(ContactList, blank=True)
-    block_list = models.ManyToManyField(BlackList, blank=True)
+    contacts = models.ManyToManyField(ContactList, blank=True, symmetrical=False)
+    block_list = models.ManyToManyField(BlackList, blank=True, symmetrical=False)
     about = models.TextField(blank=True)
 
     objects = UserManager()

@@ -59,6 +59,16 @@ class FileSerializer(serializers.RelatedField):
         return value.files
 
 
+
+class MessageReplySerializer(serializers.ModelSerializer):
+    sender = UserLessInfoSerializer(read_only=True)
+    class Meta:
+        model = PrivateMessage
+        fields = [
+            'sender', 'id', 'msg'
+        ]
+
+
 class RoomMessageSerializers(serializers.Serializer):
     sender = UserLessInfoSerializer(read_only=True)
     msg = serializers.CharField()
@@ -67,6 +77,7 @@ class RoomMessageSerializers(serializers.Serializer):
     images = AlbumSerializer(many=True, read_only=True)
     files = FileSerializer(many=True, read_only=True)
     id = serializers.IntegerField(read_only=True)
+    reply = MessageReplySerializer(read_only=True)
 
     class Meta:
         model = PrivateMessage
@@ -74,7 +85,7 @@ class RoomMessageSerializers(serializers.Serializer):
             'sender', 'id', 'msg', 'reply', 'created_at', 'images', 'files', 'dropdown'
         ]
 
-
 class HomeFeedSerializers(serializers.Serializer):
     private_chat = ChatRoomSerializers(many=True)
     group_chat = GroupRoomSerializer(many=True)
+

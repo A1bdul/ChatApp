@@ -26,8 +26,8 @@
                                         is_user["avatar"] +
                                         '" class="rounded-circle avatar-xs" alt=""><span class="user-status"></span>'
                                         : '<div class="avatar-xs"><span class="avatar-title rounded-circle bg-primary text-white"><span class="username">' + is_user["first_name"][0] + "" + is_user["last_name"][0] + '</span><span class="user-status"></span></span></div>',
-                                    s = rooms[user]['unread']?
-                                        '<div class="ms-auto"><span class="badge badge-soft-dark rounded p-1">' + rooms[user]["unread"] + '</span></div>': '',
+                                    s = rooms[user]['unread'] ?
+                                        '<div class="ms-auto"><span class="badge badge-soft-dark rounded p-1">' + rooms[user]["unread"] + '</span></div>' : '',
                                     i = '<a href="javascript: void(0);" class="unread-msg-user">',
                                     l = 2 === rooms[user]['id'] ? "active" : "";
                                 document.getElementById('usersList').insertAdjacentHTML('afterbegin', '<li class="users-chatlist chatlist' + rooms[user]['id'] + '" id=' +
@@ -223,81 +223,85 @@ function connectSocket(user1, user2) {
                     chatArrange(message, user2)
                 }
             }
+            let l = document.querySelector("#chatinput-form"),
+                g = document.querySelector("#chat-input"),
+                u = "",
+                y = document.querySelector(".chat-conversation-list");
+
+
+            socket.onmessage = function (e) {
+                let message = JSON.parse(e.data);
+                if (message.type === 'typing' && message.user !== user2) {
+                    document.getElementById('activity').innerText = 'typing..'
+                    setTimeout(function () {
+                        document.getElementById('activity').innerText = ''
+                    }, 1000)
+                } else {
+                    chatArrange(message, user2)
+                }
+            }
+            l.addEventListener('submit', (e) => {
+                e.preventDefault();
+                let value = g.value,
+                    o = document.querySelector(".image_pre"),
+                    r = document.querySelector(".attchedfile_pre"),
+                    replycard = document.querySelector('.replyCard.show'),
+                    reply_id = replycard ? replycard.id : null,
+                    reply_user = replycard? replycard.getAttribute('data-user'): null;
+
+                c = document.querySelector(".audiofile_pre");
+                if (o !== null) {
+                    socket.send(JSON.stringify({
+                        command: 'private_chat_with_image',
+                        images: C,
+                        msg: value,
+                        reply_id: reply_id,
+                        reply_user:reply_user
+                    }))
+                } else if (r !== null) {
+                    socket.send(JSON.stringify({
+                        command: 'private_chat_with_file',
+                        files: L,
+                        msg: value,
+                        reply_id: reply_id,
+                        reply_user:reply_user
+                    }))
+                } else if (c !== null) {
+                    socket.send(JSON.stringify({
+                        command: 'private_chat_with_audio',
+                        audio: S,
+                        msg: value,
+                        reply_id: reply_id,
+                        reply_user:reply_user
+                    }))
+                } else if (value) {
+                    socket.send(JSON.stringify({
+                        command: 'private_chat',
+                        msg: value,
+                        reply_id: reply_id,
+                        reply_user:reply_user
+                    }))
+                }
+
+                (g.value = ""),
+                document.querySelector(".image_pre") &&
+                document.querySelector(".image_pre").remove(),
+                    (document.getElementById("galleryfile-input").value = ""),
+                document.querySelector(".attchedfile_pre") &&
+                document.querySelector(".attchedfile_pre").remove(),
+                    (document.getElementById("attachedfile-input").value = ""),
+                document.querySelector(".audiofile_pre") &&
+                document.querySelector(".audiofile_pre").remove(),
+                    (document.getElementById("audiofile-input").value = ""),
+                    document.getElementById("close_toggle").click();
+            })
+            g.addEventListener('keypress', () => {
+                socket.send(JSON.stringify({
+                    command: 'typing'
+                }))
+            })
         });
-    let l = document.querySelector("#chatinput-form"),
-        g = document.querySelector("#chat-input"),
-        u = "",
-        y = document.querySelector(".chat-conversation-list");
 
-
-    socket.onmessage = function (e) {
-        let message = JSON.parse(e.data);
-        if (message.type === 'typing' && message.user !== user2) {
-            document.getElementById('activity').innerText = 'typing..'
-            setTimeout(function () {
-                document.getElementById('activity').innerText = ''
-            }, 1000)
-        } else {
-            console.log(message);
-            chatArrange(message, user2)
-        }
-
-    }
-    l.addEventListener('submit', (e) => {
-        e.preventDefault();
-        let value = g.value,
-            o = document.querySelector(".image_pre"),
-            r = document.querySelector(".attchedfile_pre"),
-            replycard = document.querySelector('.replyCard.show'),
-            reply_id = replycard ? replycard.id : null
-        c = document.querySelector(".audiofile_pre");
-        console.log(reply_id)
-        if (o !== null) {
-            socket.send(JSON.stringify({
-                command: 'private_chat_with_image',
-                images: C,
-                msg: value,
-                reply_id: reply_id
-            }))
-        } else if (r !== null) {
-            socket.send(JSON.stringify({
-                command: 'private_chat_with_file',
-                files: L,
-                msg: value,
-                reply_id: reply_id
-            }))
-        } else if (c !== null) {
-            socket.send(JSON.stringify({
-                command: 'private_chat_with_audio',
-                audio: S,
-                msg: value,
-                reply_id: reply_id
-            }))
-        } else if (value) {
-            socket.send(JSON.stringify({
-                command: 'private_chat',
-                msg: value,
-                reply_id: reply_id
-            }))
-        }
-
-        (g.value = ""),
-        document.querySelector(".image_pre") &&
-        document.querySelector(".image_pre").remove(),
-            (document.getElementById("galleryfile-input").value = ""),
-        document.querySelector(".attchedfile_pre") &&
-        document.querySelector(".attchedfile_pre").remove(),
-            (document.getElementById("attachedfile-input").value = ""),
-        document.querySelector(".audiofile_pre") &&
-        document.querySelector(".audiofile_pre").remove(),
-            (document.getElementById("audiofile-input").value = ""),
-            document.getElementById("close_toggle").click();
-    })
-    g.addEventListener('keypress', () => {
-        socket.send(JSON.stringify({
-            command: 'typing'
-        }))
-    })
 }
 
 function chatArrange(message, user2) {
@@ -315,11 +319,18 @@ function chatArrange(message, user2) {
         a && t.scrollTo({top: a, behavior: "smooth"});
     }
 
-    function H(e, t, a, s, i) {
-        let l = '<div class="ctext-wrap">';
+    function H(e, t, a, s, i, j) {
+        let l = '<div class="ctext-wrap">',
+            f = j && message.sender.username !== j.sender.username ? j.sender.first_name : 'You';
+        q = j ? `<div class="replymessage-block mb-0 d-flex align-items-start">
+    <div class="flex-grow-1"><h5 class="conversation-name">${f}</h5><p class="mb-0">${j.msg}</p></div>
+    <div class="flex-shrink-0">
+        <button type="button" class="btn btn-sm btn-link mt-n2 me-n3 font-size-18"></button>
+    </div>
+</div>` : '';
         if (t !== "")
             l +=
-                '<div class="ctext-wrap-content"><p class="mb-0  ctext-content"  id=' +
+                '<div class="ctext-wrap-content">' + q + '<p class="mb-0  ctext-content mt-1 p-1"  id=' +
                 e +
                 '>' +
                 t +
@@ -353,7 +364,7 @@ function chatArrange(message, user2) {
         );
     }
 
-    let a, s, i;
+    let a, i;
     a = message.sender.username === user2 ? ' right' : ' left';
     (i =
         '<li class="chat-list' +
@@ -372,7 +383,8 @@ function chatArrange(message, user2) {
             message.msg,
             message.images,
             message.files,
-            message.dropdown
+            message.dropdown,
+            message.reply
         )),
         (i +=
             '<div class="conversation-name"><small class="text-muted time">' +
@@ -386,6 +398,7 @@ function chatArrange(message, user2) {
 
         i.classList.add("show")
         i.setAttribute('id', `${message.id}`)
+        i.setAttribute('data-user', `${message.sender.username}`)
         o.addEventListener("click", function () {
             i.classList.remove("show");
         });
@@ -635,12 +648,5 @@ function f() {
 function F() {
     GLightbox({selector: ".popup-img", title: !1});
 }
+
 //
-// <div className="replymessage-block mb-0 d-flex align-items-start">
-//     <div className="flex-grow-1"><h5 className="conversation-name">Bella Cote</h5>                            <p
-//         className="mb-0">Hey, I'm going to meet a friend of mine at the department store. I have to buy some presents
-//         for my parents 🎁.</p></div>
-//     <div className="flex-shrink-0">
-//         <button type="button" className="btn btn-sm btn-link mt-n2 me-n3 font-size-18"></button>
-//     </div>
-// </div>
