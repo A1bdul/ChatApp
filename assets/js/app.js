@@ -1,35 +1,4 @@
 !(function () {
-    function f() {
-        let f = document.getElementsByClassName("user-chat");
-        document
-            .querySelectorAll(".chat-user-list li a")
-            .forEach(function (e) {
-                e.addEventListener("click", function (e) {
-                    f.forEach(function (e) {
-                        e.classList.add("user-chat-show");
-                    });
-                    let t = document.querySelector(".chat-user-list li.active");
-                    t && t.classList.remove("active"),
-                        this.parentNode.classList.add("active");
-                });
-            }),
-            document
-                .querySelectorAll(".sort-contact ul li")
-                .forEach(function (e) {
-                    e.addEventListener("click", function (e) {
-                        f.forEach(function (e) {
-                            e.classList.add("user-chat-show");
-                        });
-                    });
-                }),
-            document
-                .querySelectorAll(".user-chat-remove")
-                .forEach(function (e) {
-                    e.addEventListener("click", function (e) {
-                        f.forEach(link => link.classList.remove('user-chat-show'));
-                    });
-                });
-    }
 
     fetch('/user-api', {
         method: 'GET',
@@ -46,408 +15,198 @@
             })
                 .then(r => r.json())
                 .then(room => {
-                    let rooms = room.private_chat,
-                        group_chat = room.group_chat
-                    document.getElementById("empty-conversation").style.display = "block";
-                    for (const user in rooms) {
-                        const is_user = (main.username !== rooms[user]['user1'].username) ? rooms[user]['user1'] : rooms[user]['user2'];
-                        if (rooms.hasOwnProperty(user)) {
-                            const a = is_user["avatars"]
-                                    ? '<img src="' +
-                                    is_user["avatar"] +
-                                    '" class="rounded-circle avatar-xs" alt=""><span class="user-status"></span>'
-                                    : '<div class="avatar-xs"><span class="avatar-title rounded-circle bg-primary text-white"><span class="username">' + is_user["first_name"][0] + "" + is_user["last_name"][0] + '</span><span class="user-status"></span></span></div>',
-                                s =
-                                    '<div class="ms-auto"><span class="badge badge-soft-dark rounded p-1">' + rooms[user]["unread"] + '</span></div>',
-                                i = '<a href="javascript: void(0);" class="unread-msg-user">',
-                                l = 2 === rooms[user]['id'] ? "active" : "";
-                            document.getElementById('usersList').insertAdjacentHTML('afterbegin', '<li class="users-chatlist chatlist' + rooms[user]['id'] + '" id=' +
-                                user +
-                                ' data-name="direct-message">                  ' +
-                                i +
-                                '                   <div class="d-flex align-items-center">                      <div class="chat-user-img online align-self-center me-2 ms-0">                          ' +
-                                a +
-                                '                      </div>                      <div class="overflow-hidden">                          <p class="text-truncate mb-0">' +
-                                is_user["first_name"] +
-                                "  " +
-                                is_user["last_name"] +
-                                "</p>                      </div>                      " +
-                                s +
-                                "                  </div>              </a>        </li>"
+                        let rooms = room.private_chat,
+                            group_chat = room.group_chat
+                        document.getElementById("empty-conversation").style.display = "block";
+                        for (const user in rooms) {
+                            const is_user = (main.username !== rooms[user]['user1'].username) ? rooms[user]['user1'] : rooms[user]['user2'];
+                            if (rooms.hasOwnProperty(user)) {
+                                const a = is_user["avatars"]
+                                        ? '<img src="' +
+                                        is_user["avatar"] +
+                                        '" class="rounded-circle avatar-xs" alt=""><span class="user-status"></span>'
+                                        : '<div class="avatar-xs"><span class="avatar-title rounded-circle bg-primary text-white"><span class="username">' + is_user["first_name"][0] + "" + is_user["last_name"][0] + '</span><span class="user-status"></span></span></div>',
+                                    s = rooms[user]['unread']?
+                                        '<div class="ms-auto"><span class="badge badge-soft-dark rounded p-1">' + rooms[user]["unread"] + '</span></div>': '',
+                                    i = '<a href="javascript: void(0);" class="unread-msg-user">',
+                                    l = 2 === rooms[user]['id'] ? "active" : "";
+                                document.getElementById('usersList').insertAdjacentHTML('afterbegin', '<li class="users-chatlist chatlist' + rooms[user]['id'] + '" id=' +
+                                    user +
+                                    ' data-name="direct-message">                  ' +
+                                    i +
+                                    '                   <div class="d-flex align-items-center">                      <div class="chat-user-img online align-self-center me-2 ms-0">                          ' +
+                                    a +
+                                    '                      </div>                      <div class="overflow-hidden">                          <p class="text-truncate mb-0">' +
+                                    is_user["first_name"] +
+                                    "  " +
+                                    is_user["last_name"] +
+                                    "</p>                      </div>                      " +
+                                    s +
+                                    "                  </div>              </a>        </li>"
+                                );
+                            }
+                        }
+                        for (const chat in group_chat) {
+                            if (group_chat.hasOwnProperty(chat)) {
+                                let e = group_chat[chat]
+                                var a = e.messagecount
+                                        ? '<div class="flex-shrink-0 ms-2"><span class="badge badge-soft-dark rounded p-1">' +
+                                        e.messagecount +
+                                        "</span></div>"
+                                        : "",
+                                    s = e.messagecount
+                                        ? '<a href="javascript: void(0);" class="unread-msg-user">'
+                                        : '<a href="javascript: void(0);">';
+                                document.getElementById("channelList").innerHTML +=
+                                    '<li id="' +
+                                    chat +
+                                    '" data-name="channel">                ' +
+                                    s +
+                                    '                     <div class="d-flex align-items-center">                        <div class="flex-shrink-0 avatar-xs me-2">                            <span class="avatar-title rounded-circle bg-soft-light text-dark">#</span>                        </div>                        <div class="flex-grow-1 overflow-hidden">                            <p class="text-truncate mb-0">' +
+                                    e.name +
+                                    "</p>                        </div>                        <div>" +
+                                    a +
+                                    "</div>                        </div>                </a>            </li>";
+
+                            }
+                        }
+                        window.addEventListener("DOMContentLoaded", function () {
+                            let e = document.querySelector(
+                                "#chat-conversation .simplebar-content-wrapper"
                             );
-                        }
-                    }
-                    for (const chat in group_chat){
-                        if (group_chat.hasOwnProperty(chat)){
-                            let e = group_chat[chat]
-                            var a = e.messagecount
-              ? '<div class="flex-shrink-0 ms-2"><span class="badge badge-soft-dark rounded p-1">' +
-                e.messagecount +
-                "</span></div>"
-              : "",
-            s = e.messagecount
-              ? '<a href="javascript: void(0);" class="unread-msg-user">'
-              : '<a href="javascript: void(0);">';
-          document.getElementById("channelList").innerHTML +=
-            '<li id="contact-id-' +
-            e.id +
-            '" data-name="channel">                ' +
-            s +
-            '                     <div class="d-flex align-items-center">                        <div class="flex-shrink-0 avatar-xs me-2">                            <span class="avatar-title rounded-circle bg-soft-light text-dark">#</span>                        </div>                        <div class="flex-grow-1 overflow-hidden">                            <p class="text-truncate mb-0">' +
-            e.name +
-            "</p>                        </div>                        <div>" +
-            a +
-            "</div>                        </div>                </a>            </li>";
-
-                        }
-                    }
-                    window.addEventListener("DOMContentLoaded", function () {
-                        let e = document.querySelector(
-                            "#chat-conversation .simplebar-content-wrapper"
-                        );
-                        e.scrollTop = e.scrollHeight;
-                    });
-
-                    let profile_info = document.querySelector(".user-profile-sidebar"),
-                        i = document.getElementById("chatinputmorecollapse");
-                    f()
-
-                    function p() {
-                        let t = document
-                                .querySelector('.remove')
-                                .querySelector("#chat-conversation .simplebar-content-wrapper"),
-                            a = document.getElementsByClassName("chat-conversation-list")[0]
-                                ? document
-                                    .querySelector('.remove')
-                                    .getElementsByClassName("chat-conversation-list")[0].scrollHeight -
-                                window.innerHeight +
-                                250
-                                : 0;
-                        a && t.scrollTo({top: a, behavior: "smooth"});
-                    }
-
-                    document.body.addEventListener("click", function () {
-                        new bootstrap.Collapse(i, {toggle: !1}).hide();
-                    }),
-                    i &&
-                    i.addEventListener("shown.bs.collapse", function () {
-                        new Swiper(".chatinput-links", {
-                            slidesPerView: 3,
-                            spaceBetween: 30,
-                            breakpoints: {
-                                768: {slidesPerView: 4},
-                                1024: {slidesPerView: 6},
-                            },
+                            e.scrollTop = e.scrollHeight;
                         });
-                    }),
+
+                        let profile_info = document.querySelector(".user-profile-sidebar"),
+                            i = document.getElementById("chatinputmorecollapse");
+                        f()
+
+                        function p() {
+                            let t = document
+                                    .querySelector('.remove')
+                                    .querySelector("#chat-conversation .simplebar-content-wrapper"),
+                                a = document.getElementsByClassName("chat-conversation-list")[0]
+                                    ? document
+                                        .querySelector('.remove')
+                                        .getElementsByClassName("chat-conversation-list")[0].scrollHeight -
+                                    window.innerHeight +
+                                    250
+                                    : 0;
+                            a && t.scrollTo({top: a, behavior: "smooth"});
+                        }
+
+                        document.body.addEventListener("click", function () {
+                            new bootstrap.Collapse(i, {toggle: !1}).hide();
+                        }),
+                        i &&
+                        i.addEventListener("shown.bs.collapse", function () {
+                            new Swiper(".chatinput-links", {
+                                slidesPerView: 3,
+                                spaceBetween: 30,
+                                breakpoints: {
+                                    768: {slidesPerView: 4},
+                                    1024: {slidesPerView: 6},
+                                },
+                            });
+                        }),
+                            document
+                                .querySelectorAll(".contact-modal-list .contact-list li")
+                                .forEach(function (e) {
+                                    e.addEventListener("click", function () {
+                                        e.classList.toggle("selected");
+                                    });
+                                }),
+                            document.body.addEventListener("click", function () {
+                                new bootstrap.Collapse(i, {toggle: !1}).hide();
+                            }),
+                        i &&
                         document
                             .querySelectorAll(".contact-modal-list .contact-list li")
                             .forEach(function (e) {
                                 e.addEventListener("click", function () {
                                     e.classList.toggle("selected");
                                 });
-                            }),
-                        document.body.addEventListener("click", function () {
-                            new bootstrap.Collapse(i, {toggle: !1}).hide();
-                        }),
-                    i &&
-                    i.addEventListener("shown.bs.collapse", function () {
-                        new Swiper(".chatinput-links", {
-                            slidesPerView: 3,
-                            spaceBetween: 30,
-                            breakpoints: {
-                                768: {slidesPerView: 4},
-                                1024: {slidesPerView: 6},
-                            },
-                        });
-                    })
-                    document
-                        .querySelectorAll(".contact-modal-list .contact-list li")
-                        .forEach(function (e) {
-                            e.addEventListener("click", function () {
-                                e.classList.toggle("selected");
-                            });
-                        })
-
-                    let chats = document.querySelectorAll('.users-chatlist');
-                    chats.forEach(function (e) {
-                        e.addEventListener('click', () => {
-                            conversatonSettings(e)
-                            const user = e.id;
-                            const is_user = (main.username !== rooms[user]['user1'].username) ? rooms[user]['user1'] : rooms[user]['user2'];
-                            document.getElementById("empty-conversation").innerHTML = (
-                                `<div id="channel-chat" class="remove position-relative">
-                    <div class="p-3 p-lg-4 user-chat-topbar">
-                        <div class="row align-items-center">
-                            <div class="col-sm-4 col-8">
-                                <div class="d-flex align-items-center">
-                                    <div class="flex-shrink-0 d-lg-none me-3">
-                                        <a href="javascript: void(0);" class="user-chat-remove font-size-18 p-1"><i class="bx bx-chevron-left align-middle"></i></a>
-                                    </div>
-                                    <div class="flex-grow-1 overflow-hidden">
-                                        <div class="d-flex align-items-center">
-                                            <div class="flex-shrink-0 chat-user-img online user-own-img align-self-center me-3">
-                                                <img class="rounded-circle avatar-sm" alt="" src=>
-                                            </div>
-                                            <div class="flex-grow-1 overflow-hidden">
-                                                <h6 class="text-truncate mb-0 font-size-18"><a href="#" class="user-profile-show text-reset"></a></h6>
-                                                <p class="text-truncate text-muted mb-0"><small id="activity"></small></p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-sm-8 col-4">
-                                <ul class="list-inline user-chat-nav text-end mb-0">
-                                        <li class="list-inline-item">
-                                            <div class="dropdown">
-                                                <button class="btn nav-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    <i class='bx bx-search'></i>
-                                                </button>
-                                                <div class="dropdown-menu p-0 dropdown-menu-end dropdown-menu-lg">
-                                                    <div class="search-box p-2">
-                                                        <input type="text" class="form-control" placeholder="Search.." id="searchChatMessage">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </li>
-
-                                        <li class="list-inline-item d-none d-lg-inline-block me-2 ms-0">
-                                            <button type="button" class="btn nav-btn" data-bs-toggle="modal" data-bs-target=".audiocallModal">
-                                                <i class='bx bxs-phone-call' ></i>
-                                            </button>
-                                        </li>
-
-                                        <li class="list-inline-item d-none d-lg-inline-block me-2 ms-0">
-                                            <button type="button" class="btn nav-btn" data-bs-toggle="modal" data-bs-target=".videocallModal">
-                                                <i class='bx bx-video' ></i>
-                                            </button>
-                                        </li>
-
-                                        <li class="list-inline-item d-none d-lg-inline-block me-2 ms-0">
-                                            <button type="button" class="btn nav-btn user-profile-show">
-                                                <i class='bx bxs-info-circle' ></i>
-                                            </button>
-                                        </li>
-
-                                        <li class="list-inline-item">
-                                            <div class="dropdown">
-                                                <button class="btn nav-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    <i class='bx bx-dots-vertical-rounded' ></i>
-                                                </button>
-                                                <div class="dropdown-menu dropdown-menu-end">
-                                                    <a class="dropdown-item d-flex justify-content-between align-items-center d-lg-none user-profile-show" href="#">View Profile <i class="bx bx-user text-muted"></i></a>
-                                                    <a class="dropdown-item d-flex justify-content-between align-items-center d-lg-none" href="#" data-bs-toggle="modal" data-bs-target=".audiocallModal">Audio <i class="bx bxs-phone-call text-muted"></i></a>
-                                                    <a class="dropdown-item d-flex justify-content-between align-items-center d-lg-none" href="#" data-bs-toggle="modal" data-bs-target=".videocallModal">Video <i class="bx bx-video text-muted"></i></a>
-                                                    <a class="dropdown-item d-flex justify-content-between align-items-center" href="#">Archive <i class="bx bx-archive text-muted"></i></a>
-                                                    <a class="dropdown-item d-flex justify-content-between align-items-center" href="#">Muted <i class="bx bx-microphone-off text-muted"></i></a>
-                                                    <a class="dropdown-item d-flex justify-content-between align-items-center" href="#">Delete <i class="bx bx-trash text-muted"></i></a>
-                                                </div>
-                                            </div>
-                                        </li>
-                                    </ul>
-                            </div>
-                        </div>
-                        <div class="alert alert-warning alert-dismissible topbar-bookmark fade show p-1 px-3 px-lg-4 pe-lg-5 pe-5" role="alert">
-                            <div class="d-flex align-items-start bookmark-tabs">
-                                <div class="tab-list-link">
-                                    <a href="#" class="tab-links" data-bs-toggle="modal" data-bs-target=".pinnedtabModal"><i class="ri-pushpin-fill align-middle me-1"></i> 10 Pinned</a>
-                                </div>
-                                <div>
-                                    <a href="#" class="tab-links border-0 px-3" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Add Bookmark"><i class="ri-add-fill align-middle"></i></a>
-                                </div>
-                            </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    </div>
-                    <!-- end chat user head -->
-    
-                    <!-- start chat conversation -->
-                        <div class="chat-conversation p-3 p-lg-4 " id="chat-conversation" data-simplebar>
-                        <ul class="list-unstyled chat-conversation-list" id="users-conversation">
-                        </ul>
-                    </div>
-                    <!-- end chat conversation end -->
-                    </div>`);
-                            let t = document.querySelector(".user-profile-sidebar");
-                            document.querySelectorAll(".user-profile-show").forEach(function (e) {
-                                e.addEventListener("click", function (e) {
-                                    t.classList.toggle("d-block");
-                                });
                             })
 
-                            let a = is_user["first_name"],
-                                n = is_user['avatar'] ? is_user['avatar'] : '/assets/images/users/user-dummy-img.jpg';
-                            document.getElementById(
-                                "channel-chat"
-                            ).style.display = "block";
-                            document.getElementById("chat-input-section").style.display =
-                                "block";
-                            document.getElementById("chat-input").focus();
+                        let chats = document.querySelectorAll('.users-chatlist');
+                        chats.forEach(function (e) {
+                            e.addEventListener('click', () => {
+                                conversatonSettings(e)
+                                const user = e.id;
+                                conversatonSettings('users', rooms[user])
+                                const is_user = (main.username !== rooms[user]['user1'].username) ? rooms[user]['user1'] : rooms[user]['user2'];
+                                let a = is_user["first_name"],
+                                    n = is_user['avatar'] ? is_user['avatar'] : '/assets/images/users/user-dummy-img.jpg';
 
-                            (document.querySelector(
-                                ".user-profile-sidebar .user-name"
-                            ).innerHTML = a),
-                                (document
-                                    .getElementById("channel-chat")
-                                    .querySelector(
-                                        ".text-truncate .user-profile-show"
+                                (document.querySelector(
+                                    ".user-profile-sidebar .user-name"
+                                ).innerHTML = a),
+                                    (document
+                                        .getElementById("channel-chat")
+                                        .querySelector(
+                                            ".text-truncate .user-profile-show"
+                                        ).innerHTML = a),
+                                    (document.querySelector(
+                                        ".user-profile-desc .text-truncate"
                                     ).innerHTML = a),
-                                (document.querySelector(
-                                    ".user-profile-desc .text-truncate"
-                                ).innerHTML = a),
-                                (document.querySelector(
-                                    ".audiocallModal .text-truncate"
-                                ).innerHTML = a),
-                                (document.querySelector(
-                                    ".videocallModal .text-truncate"
-                                ).innerHTML = a);
-                            (document.querySelectorAll('.user2-email').forEach(link => link.innerHTML = is_user.email))
-                            let s = is_user["avatar"];
-                            s
-                                ? (document
-                                    .querySelector(".user-own-img .avatar-sm")
-                                    .setAttribute("src", s),
-                                    document
-                                        .querySelector(".user-profile-sidebar .profile-img")
+                                    (document.querySelector(
+                                        ".audiocallModal .text-truncate"
+                                    ).innerHTML = a),
+                                    (document.querySelector(
+                                        ".videocallModal .text-truncate"
+                                    ).innerHTML = a);
+                                (document.querySelectorAll('.user2-email').forEach(link => link.innerHTML = is_user.email))
+                                let s = is_user["avatar"];
+                                s
+                                    ? (document
+                                        .querySelector(".user-own-img .avatar-sm")
                                         .setAttribute("src", s),
-                                    document
-                                        .querySelector(".audiocallModal .img-thumbnail")
-                                        .setAttribute("src", s),
-                                    document
-                                        .querySelector(".videocallModal .videocallModal-bg")
-                                        .setAttribute("src", s))
-                                : (document
-                                    .querySelector(".user-own-img .avatar-sm")
-                                    .setAttribute("src", n),
-                                    document
-                                        .querySelector(".user-profile-sidebar .profile-img")
+                                        document
+                                            .querySelector(".user-profile-sidebar .profile-img")
+                                            .setAttribute("src", s),
+                                        document
+                                            .querySelector(".audiocallModal .img-thumbnail")
+                                            .setAttribute("src", s),
+                                        document
+                                            .querySelector(".videocallModal .videocallModal-bg")
+                                            .setAttribute("src", s))
+                                    : (document
+                                        .querySelector(".user-own-img .avatar-sm")
                                         .setAttribute("src", n),
-                                    document
-                                        .querySelector(".audiocallModal .img-thumbnail")
-                                        .setAttribute("src", n),
-                                    document
-                                        .querySelector(".videocallModal .videocallModal-bg")
-                                        .setAttribute("src", n));
-                            connectSocket(is_user.username, main.username)
-                        })
-                    })
-                    let groups = document.querySelectorAll('#channelList li')
-                    groups.forEach(function(e){
-                        e.addEventListener('click', ()=>{
-                            conversatonSettings(e)
-                            document.getElementById("empty-conversation").innerHTML = (`<div id="channel-chat" class="position-relative">
-                        <div class="p-3 p-lg-4 user-chat-topbar">
-                            <div class="row align-items-center">
-                                <div class="col-sm-4 col-8">
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0 d-block d-lg-none me-3">
-                                            <a href="javascript: void(0);" class="user-chat-remove font-size-18 p-1"><i class="bx bx-chevron-left align-middle"></i></a>
-                                        </div>
-                                        <div class="flex-grow-1 overflow-hidden">
-                                            <div class="d-flex align-items-center">                            
-                                                <div class="flex-shrink-0 chat-user-img online user-own-img align-self-center me-3">
-                                                    <img src="assets/images/users/user-dummy-img.jpg" class="rounded-circle avatar-sm" alt="">                            
-                                                </div>
-                                                <div class="flex-grow-1 overflow-hidden">
-                                                    <h6 class="text-truncate mb-0 font-size-18"><a href="#" class="user-profile-show text-reset">Design Phase 2</a></h6>
-                                                    <p class="text-truncate text-muted mb-0"><small>24 Members</small></p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-sm-8 col-4">
-                                    <ul class="list-inline user-chat-nav text-end mb-0">                                        
-                                        <li class="list-inline-item">
-                                            <div class="dropdown">
-                                                <button class="btn nav-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    <i class='bx bx-search'></i>
-                                                </button>
-                                                <div class="dropdown-menu p-0 dropdown-menu-end dropdown-menu-lg">
-                                                    <div class="search-box p-2">
-                                                        <input type="text" class="form-control" placeholder="Search..">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </li>
-
-                                        <li class="list-inline-item d-none d-lg-inline-block me-2 ms-0">
-                                            <button type="button" class="btn nav-btn user-profile-show">
-                                                <i class='bx bxs-info-circle'></i>
-                                            </button>
-                                        </li>
-
-                                        <li class="list-inline-item">
-                                            <div class="dropdown">
-                                                <button class="btn nav-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    <i class='bx bx-dots-vertical-rounded' ></i>
-                                                </button>
-                                                <div class="dropdown-menu dropdown-menu-end">
-                                                    <a class="dropdown-item d-flex justify-content-between align-items-center d-lg-none user-profile-show" href="#">View Profile <i class="bx bx-user text-muted"></i></a>
-                                                    <a class="dropdown-item d-flex justify-content-between align-items-center d-lg-none" href="#" data-bs-toggle="modal" data-bs-target=".audiocallModal">Audio <i class="bx bxs-phone-call text-muted"></i></a>
-                                                    <a class="dropdown-item d-flex justify-content-between align-items-center d-lg-none" href="#" data-bs-toggle="modal" data-bs-target=".videocallModal">Video <i class="bx bx-video text-muted"></i></a>
-                                                    <a class="dropdown-item d-flex justify-content-between align-items-center" href="#">Archive <i class="bx bx-archive text-muted"></i></a>
-                                                    <a class="dropdown-item d-flex justify-content-between align-items-center" href="#">Muted <i class="bx bx-microphone-off text-muted"></i></a>
-                                                    <a class="dropdown-item d-flex justify-content-between align-items-center" href="#">Delete <i class="bx bx-trash text-muted"></i></a>
-                                                </div>
-                                            </div>
-                                        </li>                                        
-                                    </ul>                                    
-                                </div>
-                            </div>
-                            <div class="alert alert-warning alert-dismissible topbar-bookmark fade show p-1 px-3 px-lg-4 pe-lg-5 pe-5" role="alert">
-                                <div class="d-flex align-items-start bookmark-tabs">
-                                    <div class="tab-list-link">
-                                        <a href="#" class="tab-links" data-bs-toggle="modal" data-bs-target=".pinnedtabModal"><i class="ri-pushpin-fill align-middle me-1"></i> 10 Pinned</a>
-                                    </div>
-                                    <div>
-                                        <a href="#" class="tab-links border-0 px-3" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Add Bookmark"><i class="ri-add-fill align-middle"></i></a>
-                                    </div>
-                                </div>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        </div>
-                        <!-- end chat user head -->
-
-                        <!-- start chat conversation -->
-
-                        <div class="chat-conversation p-3 p-lg-4" id="chat-conversation" data-simplebar>
-                            <ul class="list-unstyled chat-conversation-list" id="channel-conversation">       
-                            </ul>
-                        </div>
-                        <div class="alert alert-warning alert-dismissible copyclipboard-alert px-4 fade show " id="copyClipBoardChannel" role="alert">
-                            message copied
-                        </div>
-                        <!-- end chat conversation end -->
-                        </div>`);
-                            let t = document.querySelector(".user-profile-sidebar");
-                            document.querySelectorAll(".user-profile-show").forEach(function (e) {
-                                e.addEventListener("click", function (e) {
-                                    t.classList.toggle("d-block");
-                                });
+                                        document
+                                            .querySelector(".user-profile-sidebar .profile-img")
+                                            .setAttribute("src", n),
+                                        document
+                                            .querySelector(".audiocallModal .img-thumbnail")
+                                            .setAttribute("src", n),
+                                        document
+                                            .querySelector(".videocallModal .videocallModal-bg")
+                                            .setAttribute("src", n));
+                                connectSocket(is_user.username, main.username)
                             })
-                            f(); F()
                         })
-                    })
-                }
+                        let groups = document.querySelectorAll('#channelList li')
+                        groups.forEach(function (e) {
+                            e.addEventListener('click', () => {
+                                const user = e.id;
+                                conversatonSettings('group', group_chat[user])
+                            })
+                        })
+                    }
                 )
         })
 
-  function F() {
-    GLightbox({ selector: ".popup-img", title: !1 });
-  }
-  document.getElementById("emoji-btn").addEventListener("click", function () {
-    setTimeout(function () {
-      var e,
-        t = document.getElementsByClassName("fg-emoji-picker")[0];
-      !t ||
-        ((e = window.getComputedStyle(t)
-          ? window.getComputedStyle(t).getPropertyValue("left")
-          : "") &&
-          ((e = (e = e.replace("px", "")) - 40 + "px"), (t.style.left = e)));
-    }, 0);
-  });
+    document.getElementById("emoji-btn").addEventListener("click", function () {
+        setTimeout(function () {
+            var e,
+                t = document.getElementsByClassName("fg-emoji-picker")[0];
+            !t ||
+            ((e = window.getComputedStyle(t)
+                    ? window.getComputedStyle(t).getPropertyValue("left")
+                    : "") &&
+                ((e = (e = e.replace("px", "")) - 40 + "px"), (t.style.left = e)));
+        }, 0);
+    });
 })();
 
 function connectSocket(user1, user2) {
@@ -542,7 +301,6 @@ function connectSocket(user1, user2) {
 }
 
 function chatArrange(message, user2) {
-
     function p() {
         let t = document
                 .querySelector('.remove')
@@ -627,10 +385,11 @@ function chatArrange(message, user2) {
             o = document.querySelector("#close_toggle");
 
         i.classList.add("show")
-            i.setAttribute('id', `${message.id}`)
+        i.setAttribute('id', `${message.id}`)
         o.addEventListener("click", function () {
             i.classList.remove("show");
         });
+        document.getElementById("chat-input").focus();
         let e = document.getElementById(`${message.id}`).innerText
         document.querySelector(
             ".replyCard .replymessage-block .flex-grow-1 .mb-0"
@@ -643,6 +402,236 @@ function chatArrange(message, user2) {
     })
     p()
 }
-function conversatonSettings(data){
- console.log(data)
+
+function conversatonSettings(type, data) {
+    let a = type === 'group' ? `<div id="channel-chat" class="position-relative">
+                        <div class="p-3 p-lg-4 user-chat-topbar">
+                            <div class="row align-items-center">
+                                <div class="col-sm-4 col-8">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0 d-block d-lg-none me-3">
+                                            <a href="javascript: void(0);" class="user-chat-remove font-size-18 p-1"><i class="bx bx-chevron-left align-middle"></i></a>
+                                        </div>
+                                        <div class="flex-grow-1 overflow-hidden">
+                                            <div class="d-flex align-items-center">                            
+                                                <div class="flex-shrink-0 chat-user-img online user-own-img align-self-center me-3">
+                                                    <img src="assets/images/users/user-dummy-img.jpg" class="rounded-circle avatar-sm" alt="">                            
+                                                </div>
+                                                <div class="flex-grow-1 overflow-hidden">
+                                                    <h6 class="text-truncate mb-0 font-size-18"><a href="#" class="user-profile-show text-reset">Design Phase 2</a></h6>
+                                                    <p class="text-truncate text-muted mb-0"><small>24 Members</small></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-8 col-4">
+                                    <ul class="list-inline user-chat-nav text-end mb-0">                                        
+                                        <li class="list-inline-item">
+                                            <div class="dropdown">
+                                                <button class="btn nav-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                    <i class='bx bx-search'></i>
+                                                </button>
+                                                <div class="dropdown-menu p-0 dropdown-menu-end dropdown-menu-lg">
+                                                    <div class="search-box p-2">
+                                                        <input type="text" class="form-control" placeholder="Search..">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </li>
+
+                                        <li class="list-inline-item d-none d-lg-inline-block me-2 ms-0">
+                                            <button type="button" class="btn nav-btn user-profile-show">
+                                                <i class='bx bxs-info-circle'></i>
+                                            </button>
+                                        </li>
+
+                                        <li class="list-inline-item">
+                                            <div class="dropdown">
+                                                <button class="btn nav-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                    <i class='bx bx-dots-vertical-rounded' ></i>
+                                                </button>
+                                                <div class="dropdown-menu dropdown-menu-end">
+                                                    <a class="dropdown-item d-flex justify-content-between align-items-center d-lg-none user-profile-show" href="#">View Profile <i class="bx bx-user text-muted"></i></a>
+                                                    <a class="dropdown-item d-flex justify-content-between align-items-center d-lg-none" href="#" data-bs-toggle="modal" data-bs-target=".audiocallModal">Audio <i class="bx bxs-phone-call text-muted"></i></a>
+                                                    <a class="dropdown-item d-flex justify-content-between align-items-center d-lg-none" href="#" data-bs-toggle="modal" data-bs-target=".videocallModal">Video <i class="bx bx-video text-muted"></i></a>
+                                                    <a class="dropdown-item d-flex justify-content-between align-items-center" href="#">Archive <i class="bx bx-archive text-muted"></i></a>
+                                                    <a class="dropdown-item d-flex justify-content-between align-items-center" href="#">Muted <i class="bx bx-microphone-off text-muted"></i></a>
+                                                    <a class="dropdown-item d-flex justify-content-between align-items-center" href="#">Delete <i class="bx bx-trash text-muted"></i></a>
+                                                </div>
+                                            </div>
+                                        </li>                                        
+                                    </ul>                                    
+                                </div>
+                            </div>
+                            <div class="alert alert-warning alert-dismissible topbar-bookmark fade show p-1 px-3 px-lg-4 pe-lg-5 pe-5" role="alert">
+                                <div class="d-flex align-items-start bookmark-tabs">
+                                    <div class="tab-list-link">
+                                        <a href="#" class="tab-links" data-bs-toggle="modal" data-bs-target=".pinnedtabModal"><i class="ri-pushpin-fill align-middle me-1"></i> 10 Pinned</a>
+                                    </div>
+                                    <div>
+                                        <a href="#" class="tab-links border-0 px-3" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Add Bookmark"><i class="ri-add-fill align-middle"></i></a>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        </div>
+                        <!-- end chat user head -->
+
+                        <!-- start chat conversation -->
+
+                        <div class="chat-conversation p-3 p-lg-4" id="chat-conversation" data-simplebar>
+                            <ul class="list-unstyled chat-conversation-list" id="channel-conversation">       
+                            </ul>
+                        </div>
+                        <div class="alert alert-warning alert-dismissible copyclipboard-alert px-4 fade show " id="copyClipBoardChannel" role="alert">
+                            message copied
+                        </div>
+                        <!-- end chat conversation end -->
+                        </div>` : `<div id="channel-chat" class="remove position-relative">
+                    <div class="p-3 p-lg-4 user-chat-topbar">
+                        <div class="row align-items-center">
+                            <div class="col-sm-4 col-8">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 d-lg-none me-3">
+                                        <a href="javascript: void(0);" class="user-chat-remove font-size-18 p-1"><i class="bx bx-chevron-left align-middle"></i></a>
+                                    </div>
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 chat-user-img online user-own-img align-self-center me-3">
+                                                <img class="rounded-circle avatar-sm" alt="" src=>
+                                            </div>
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <h6 class="text-truncate mb-0 font-size-18"><a href="#" class="user-profile-show text-reset"></a></h6>
+                                                <p class="text-truncate text-muted mb-0"><small id="activity"></small></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-8 col-4">
+                                <ul class="list-inline user-chat-nav text-end mb-0">
+                                        <li class="list-inline-item">
+                                            <div class="dropdown">
+                                                <button class="btn nav-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                    <i class='bx bx-search'></i>
+                                                </button>
+                                                <div class="dropdown-menu p-0 dropdown-menu-end dropdown-menu-lg">
+                                                    <div class="search-box p-2">
+                                                        <input type="text" class="form-control" placeholder="Search.." id="searchChatMessage">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </li>
+
+                                        <li class="list-inline-item d-none d-lg-inline-block me-2 ms-0">
+                                            <button type="button" class="btn nav-btn" data-bs-toggle="modal" data-bs-target=".audiocallModal">
+                                                <i class='bx bxs-phone-call' ></i>
+                                            </button>
+                                        </li>
+
+                                        <li class="list-inline-item d-none d-lg-inline-block me-2 ms-0">
+                                            <button type="button" class="btn nav-btn" data-bs-toggle="modal" data-bs-target=".videocallModal">
+                                                <i class='bx bx-video' ></i>
+                                            </button>
+                                        </li>
+
+                                        <li class="list-inline-item d-none d-lg-inline-block me-2 ms-0">
+                                            <button type="button" class="btn nav-btn user-profile-show">
+                                                <i class='bx bxs-info-circle' ></i>
+                                            </button>
+                                        </li>
+
+                                        <li class="list-inline-item">
+                                            <div class="dropdown">
+                                                <button class="btn nav-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                    <i class='bx bx-dots-vertical-rounded' ></i>
+                                                </button>
+                                                <div class="dropdown-menu dropdown-menu-end">
+                                                    <a class="dropdown-item d-flex justify-content-between align-items-center d-lg-none user-profile-show" href="#">View Profile <i class="bx bx-user text-muted"></i></a>
+                                                    <a class="dropdown-item d-flex justify-content-between align-items-center d-lg-none" href="#" data-bs-toggle="modal" data-bs-target=".audiocallModal">Audio <i class="bx bxs-phone-call text-muted"></i></a>
+                                                    <a class="dropdown-item d-flex justify-content-between align-items-center d-lg-none" href="#" data-bs-toggle="modal" data-bs-target=".videocallModal">Video <i class="bx bx-video text-muted"></i></a>
+                                                    <a class="dropdown-item d-flex justify-content-between align-items-center" href="#">Archive <i class="bx bx-archive text-muted"></i></a>
+                                                    <a class="dropdown-item d-flex justify-content-between align-items-center" href="#">Muted <i class="bx bx-microphone-off text-muted"></i></a>
+                                                    <a class="dropdown-item d-flex justify-content-between align-items-center" href="#">Delete <i class="bx bx-trash text-muted"></i></a>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                            </div>
+                        </div>
+                        <div class="alert alert-warning alert-dismissible topbar-bookmark fade show p-1 px-3 px-lg-4 pe-lg-5 pe-5" role="alert">
+                            <div class="d-flex align-items-start bookmark-tabs">
+                                <div class="tab-list-link">
+                                    <a href="#" class="tab-links" data-bs-toggle="modal" data-bs-target=".pinnedtabModal"><i class="ri-pushpin-fill align-middle me-1"></i> 10 Pinned</a>
+                                </div>
+                                <div>
+                                    <a href="#" class="tab-links border-0 px-3" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Add Bookmark"><i class="ri-add-fill align-middle"></i></a>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </div>
+                    <!-- end chat user head -->
+    
+                    <!-- start chat conversation -->
+                        <div class="chat-conversation p-3 p-lg-4 " id="chat-conversation" data-simplebar>
+                        <ul class="list-unstyled chat-conversation-list" id="users-conversation">
+                        </ul>
+                    </div>
+                    <!-- end chat conversation end -->
+                    </div>`;
+    document.getElementById("empty-conversation").innerHTML = (a);
+    document.getElementById(
+        "channel-chat"
+    ).style.display = "block";
+    document.getElementById("chat-input-section").style.display =
+        "block";
+    document.getElementById("chat-input").focus();
+    f();
+    F();
+}
+
+function f() {
+    let f = document.getElementsByClassName("user-chat");
+    document
+        .querySelectorAll(".chat-user-list li a")
+        .forEach(function (e) {
+            e.addEventListener("click", function (e) {
+                f.forEach(function (e) {
+                    e.classList.add("user-chat-show");
+                });
+                let t = document.querySelector(".chat-user-list li.active");
+                t && t.classList.remove("active"),
+                    this.parentNode.classList.add("active");
+            });
+
+        }),
+        document
+            .querySelectorAll(".sort-contact ul li")
+            .forEach(function (e) {
+                e.addEventListener("click", function (e) {
+                    f.forEach(function (e) {
+                        e.classList.add("user-chat-show");
+                    });
+                });
+            }),
+        document
+            .querySelectorAll(".user-chat-remove")
+            .forEach(function (e) {
+                e.addEventListener("click", function (e) {
+                    f.forEach(link => link.classList.remove('user-chat-show'));
+                });
+            });
+    let t = document.querySelector(".user-profile-sidebar");
+    document.querySelectorAll(".user-profile-show").forEach(function (e) {
+        e.addEventListener("click", function (e) {
+            t.classList.toggle("d-block");
+        });
+    })
+
+}
+
+function F() {
+    GLightbox({selector: ".popup-img", title: !1});
 }

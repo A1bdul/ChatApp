@@ -33,8 +33,9 @@ class AppChatConsumer(AsyncJsonWebsocketConsumer):
             })
         if command == 'private_chat':
             if content.get('reply_id'):
-                self.reply = await sync_to_async(PrivateMessage.objects.get)(id=content.get('reply_id'), room=self.chat_room)
-                self.newmsg = await sync_to_async(PrivateMessage.objects.create)(room=self.chat_room, sender=self.me, msg=message, reply=self.reply)
+                self.reply = await sync_to_async(PrivateMessage.objects.get)(id=content.get('reply_id'))
+                self.newmsg = await sync_to_async(PrivateMessage.objects.create)(room=self.chat_room, reply=self.reply,sender=self.me,
+                                                                                 msg=message)
             else:
                 self.newmsg = await sync_to_async(PrivateMessage.objects.create)(room=self.chat_room, sender=self.me,
                                                                            msg=message)
@@ -45,11 +46,9 @@ class AppChatConsumer(AsyncJsonWebsocketConsumer):
                 "username": self.newmsg.sender.username,
                 "command": command,
                 "created_at": self.newmsg.created_at.strftime("%H:%M"),
-
             }
             if self.reply:
                 data['reply'] = self.reply
-                data['reply_username'] = self.reply.sender.username
             await self.channel_layer.group_send(self.room_name, data)
 
     async def websocket_typing(self, event):
@@ -73,8 +72,7 @@ class AppChatConsumer(AsyncJsonWebsocketConsumer):
         }
         if self.reply:
             message['reply'] = {
-                'reply_msg': event['reply'].msg,
-                'sender': event['reply'].sender.username
+                'reply_msg': event['reply'].msg
             }
         await self.send_json(message)
 
