@@ -1,20 +1,21 @@
 from rest_framework import serializers
-from .models import User
+from .models import User, Profile
 
 
-class UserLessInfoSerializer(serializers.ModelSerializer):
+class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
+        model = Profile
         fields = [
-            'username', 'first_name', 'last_name', 'email', 'avatar', 'cover_image', 'about'
+            'bio', 'avatar', 'cover_image', 'contacts', 'block_list'
         ]
 
 
-class UserFullInfoSerializers(serializers.ModelSerializer):
-    contacts = UserLessInfoSerializer(many=True, read_only=True)
+class UserInfoSerializer(serializers.ModelSerializer):
+    profile = ProfileSerializer()
 
     class Meta:
         model = User
         fields = [
-            'first_name', 'last_name', 'username', 'contacts', 'email', 'about','avatar', 'cover_image', 'block_list'
+            'username', 'first_name', 'last_name', 'email', 'profile'
         ]
+

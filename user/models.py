@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth import settings
+from django.db.models import Q
 
 
 # Create your models here.
@@ -19,6 +20,7 @@ class UserManager(BaseUserManager):
         email = self.normalize_email(email)
         user = self.model(email=email, username=username, **extra_fields)
         user.set_password(password)
+        Profile.objects.create(user=user)
         user.save()
         return user
 
@@ -34,34 +36,12 @@ class UserManager(BaseUserManager):
 
         return self.create_user(email, username, password, **extra_fields)
 
-
-class ContactList(models.Model):
-    name = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    favourite = models.BooleanField(default=False)
-
-    def __str__(self):
-        return self.name
-
-
-class BlackList(models.Model):
-    name = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.name
-
-
 class User(AbstractUser):
     first_name = models.CharField(max_length=200, blank=True, null=True)
     last_name = models.CharField(max_length=200, blank=True, null=True)
     username = models.CharField(max_length=200, unique=True)
     email = models.CharField(max_length=200, unique=True)
     password = models.CharField(max_length=200)
-    bio = models.TextField(blank=True, default="")
-    avatar = models.ImageField(blank=True, null=True, upload_to='avatars')
-    cover_image = models.ImageField(blank=True, null=True, upload_to='cover_image')
-    contacts = models.ManyToManyField(ContactList, blank=True, symmetrical=False)
-    block_list = models.ManyToManyField(BlackList, blank=True, symmetrical=False)
-    about = models.TextField(blank=True)
 
     objects = UserManager()
 
@@ -74,3 +54,37 @@ class User(AbstractUser):
     class Meta:
         verbose_name = 'user'
         verbose_name_plural = 'users'
+
+
+class ChatRoomManager(models.Manager):
+
+    def get_or_create_room(self, u1, u2):
+        is_room = ChatRoom.objects.filter(Q(user1=u1, user2=u2) | Q(user2=u1, user1=u2)).first()
+        if not is_room:
+            return ChatRoom.objects.create(user1=u1, user2=u2)
+        return is_room
+
+
+class ChatRoom(models.Model):
+    user1 = models.ForeignKey(User, null=True, blank=True, related_name='user1', on_delete=models.SET_NULL)
+    user2 = models.ForeignKey(User, blank=True, null=True, related_name='user2', on_delete=models.SET_NULL)
+    connected_users = models.ManyToManyField(User, related_name='connected_user')
+
+    objects = models.Manager()
+    get_room = ChatRoomManager()
+
+    def __str__(self):
+        return f'chat Room for {self.user1} and {self.user2}'
+
+    class Meta:
+        app_label = 'App'
+
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    bio = models.TextField(blank=True, default="")
+    avatar = models.ImageField(blank=True, null=True, upload_to='avatars')
+    cover_image = models.ImageField(blank=True, null=True, upload_to='cover_image')
+    favourite = models.ManyToManyField(ChatRoom, blank=True, related_name='favourite')
+    contacts = models.ManyToManyField('self', symmetrical=False, related_name='contact', blank=True)
+    block_list = models.ManyToManyField('self', symmetrical=False, related_name='blocked', blank=True)

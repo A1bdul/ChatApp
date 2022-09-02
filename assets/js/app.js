@@ -1,5 +1,33 @@
 !(function () {
-
+    fetch('user-error', {
+        method: 'GET'
+    })
+        .then(r => r.json())
+        .then(data => {
+            for (const contacts in data) {
+                if (data.hasOwnProperty(contacts)) {
+                    let contact = data[contacts];
+                    let i = `<div class="mt-3">
+<div class="contact-list-title">
+                                    ${contacts}
+                                    </div>
+                                    <ul class="list-unstyled contact-list">`
+                    for (const user in contact) {
+                        if (contact.hasOwnProperty(user)) {
+                            i += (`<li>
+                            <div>
+                                <h5 class="font-size-14 m-0" style="cursor:pointer;">${contact[user].first_name} ${contact[user].last_name}</h5>
+                            </div>
+                        </li>`)
+                        }
+                    }
+                    i += (` </ul>
+                                </div>`);
+                    document.getElementById('contactList').insertAdjacentHTML('beforeend', i)
+                }
+            }
+        })
+    
     fetch('/user-api', {
         method: 'GET',
     })
@@ -7,45 +35,23 @@
         .then(main => {
             document.querySelectorAll('.user-name').forEach(link => link.innerHTML = main.first_name + ' ' + main.last_name)
             document.querySelectorAll('.user-email').forEach(link => link.innerHTML = main.email)
-            let avatar = main.avatar ? main.avatar : '/assets/images/users/user-dummy-img.jpg'
+            let avatar = main.profile.avatar ? main.profile.avatar : '/assets/images/users/user-dummy-img.jpg'
             document.querySelectorAll('.user-image').forEach(link => link.src = avatar)
-            document.querySelectorAll('.user-about').forEach(link => link.innerHTML = main.about)
+            document.querySelectorAll('.user-about').forEach(link => link.innerHTML = main.bio)
             fetch('/api/all-room', {
                 method: 'GET'
             })
                 .then(r => r.json())
                 .then(room => {
-                        let rooms = room.private_chat,
-                            group_chat = room.group_chat
-                        document.getElementById("empty-conversation").style.display = "block";
-                        for (const user in rooms) {
-                            const is_user = (main.username !== rooms[user]['user1'].username) ? rooms[user]['user1'] : rooms[user]['user2'];
-                            if (rooms.hasOwnProperty(user)) {
-                                const a = is_user["avatars"]
-                                        ? '<img src="' +
-                                        is_user["avatar"] +
-                                        '" class="rounded-circle avatar-xs" alt=""><span class="user-status"></span>'
-                                        : '<div class="avatar-xs"><span class="avatar-title rounded-circle bg-primary text-white"><span class="username">' + is_user["first_name"][0] + "" + is_user["last_name"][0] + '</span><span class="user-status"></span></span></div>',
-                                    s = rooms[user]['unread'] ?
-                                        '<div class="ms-auto"><span class="badge badge-soft-dark rounded p-1">' + rooms[user]["unread"] + '</span></div>' : '',
-                                    i = '<a href="javascript: void(0);" class="unread-msg-user">',
-                                    l = 2 === rooms[user]['id'] ? "active" : "";
-                                document.getElementById('usersList').insertAdjacentHTML('afterbegin', '<li class="users-chatlist chatlist' + rooms[user]['id'] + '" id=' +
-                                    user +
-                                    ' data-name="direct-message">                  ' +
-                                    i +
-                                    '                   <div class="d-flex align-items-center">                      <div class="chat-user-img online align-self-center me-2 ms-0">                          ' +
-                                    a +
-                                    '                      </div>                      <div class="overflow-hidden">                          <p class="text-truncate mb-0">' +
-                                    is_user["first_name"] +
-                                    "  " +
-                                    is_user["last_name"] +
-                                    "</p>                      </div>                      " +
-                                    s +
-                                    "                  </div>              </a>        </li>"
-                                );
+                        for (const chat in room) {
+                            if (chat === 'usersList' || chat === 'favourite_users') {
+                                chatList(chat, room[chat], main)
                             }
                         }
+                        let group_chat = room.channelList,
+                            rooms = Object.assign(room.favourite_users, room.usersList)
+                        console.log(rooms)
+                        document.getElementById("empty-conversation").style.display = "block";
                         for (const chat in group_chat) {
                             if (group_chat.hasOwnProperty(chat)) {
                                 let e = group_chat[chat]
@@ -159,6 +165,7 @@
                                 let s = is_user["avatar"];
                                 s
                                     ? (document
+                                        .querySelector(".user-own-img .profile.avatar-sm")
                                         .querySelector(".user-own-img .avatar-sm")
                                         .setAttribute("src", s),
                                         document
@@ -182,7 +189,7 @@
                                         document
                                             .querySelector(".videocallModal .videocallModal-bg")
                                             .setAttribute("src", n));
-                                connectSocket(is_user.username, main.username)
+                                connectSocket('users', is_user.username, main.username)
                             })
                         })
                         let groups = document.querySelectorAll('#channelList li')
@@ -190,11 +197,19 @@
                             e.addEventListener('click', () => {
                                 const user = e.id;
                                 conversatonSettings('group', group_chat[user])
+                                let a = group_chat[user].name;
+                                (document
+                                    .getElementById("channel-chat")
+                                    .querySelector(
+                                        ".text-truncate .user-profile-show"
+                                    ).innerHTML = a)
+                                connectSocket('group', group_chat[user].id, main.username)
                             })
                         })
                     }
                 )
-        })
+        });
+
 
     document.getElementById("emoji-btn").addEventListener("click", function () {
         setTimeout(function () {
@@ -209,10 +224,43 @@
     });
 })();
 
-function connectSocket(user1, user2) {
-    let url = `ws://${window.location.host}/ws/${user1}`,
+function chatList(type, rooms, main) {
+    for (const user in rooms) {
+        if (rooms.hasOwnProperty(user)) {
+            const is_user = (main.username !== rooms[user]['user1'].username) ? rooms[user]['user1'] : rooms[user]['user2'];
+            const a = is_user["avatar"]
+                    ? '<img src="' +
+                    is_user["avatar"] +
+                    '" class="rounded-circle avatar-xs" alt=""><span class="user-status"></span>'
+                    : '<div class="avatar-xs"><span class="avatar-title rounded-circle bg-primary text-white"><span class="username">' + is_user["first_name"][0] + "" + is_user["last_name"][0] + '</span><span class="user-status"></span></span></div>',
+                s = rooms[user]['unread'] ?
+                    '<div class="ms-auto"><span class="badge badge-soft-dark rounded p-1">' + rooms[user]["unread"] + '</span></div>' : '',
+                i = '<a href="javascript: void(0);" class="unread-msg-user">',
+                l = 2 === rooms[user]['id'] ? "active" : "";
+            document.getElementById(`${type}`).insertAdjacentHTML('afterbegin', '<li class="users-chatlist chatlist' + rooms[user]['id'] + '" id=' +
+                user +
+                ' data-name="direct-message">                  ' +
+                i +
+                '                   <div class="d-flex align-items-center">                      <div class="chat-user-img online align-self-center me-2 ms-0">                          ' +
+                a +
+                '                      </div>                      <div class="overflow-hidden">                          <p class="text-truncate mb-0">' +
+                is_user["first_name"] +
+                "  " +
+                is_user["last_name"] +
+                "</p>                      </div>                      " +
+                s +
+                "                  </div>              </a>        </li>"
+            );
+        }
+    }
+}
+
+
+function connectSocket(type, chatId, user2) {
+    let url = type === 'group' ? `ws://${window.location.host}/ws/group/${chatId}` : `ws://${window.location.host}/ws/${chatId}`,
+        message_url = type === 'group' ? 'api/group-message/' + chatId : `api/room-messages/${chatId}`,
         socket = new WebSocket(url);
-    fetch(`api/room-messages/${user1}`, {
+    fetch(message_url, {
         method: 'GET'
     })
         .then(res => res.json())
@@ -223,88 +271,90 @@ function connectSocket(user1, user2) {
                     chatArrange(message, user2)
                 }
             }
-            let l = document.querySelector("#chatinput-form"),
-                g = document.querySelector("#chat-input"),
-                u = "",
-                y = document.querySelector(".chat-conversation-list");
-
-
-            socket.onmessage = function (e) {
-                let message = JSON.parse(e.data);
-                if (message.type === 'typing' && message.user !== user2) {
-                    document.getElementById('activity').innerText = 'typing..'
-                    setTimeout(function () {
-                        document.getElementById('activity').innerText = ''
-                    }, 1000)
-                } else {
-                    chatArrange(message, user2)
-                }
-            }
-            l.addEventListener('submit', (e) => {
-                e.preventDefault();
-                let value = g.value,
-                    o = document.querySelector(".image_pre"),
-                    r = document.querySelector(".attchedfile_pre"),
-                    replycard = document.querySelector('.replyCard.show'),
-                    reply_id = replycard ? replycard.id : null,
-                    reply_user = replycard? replycard.getAttribute('data-user'): null;
-
-                c = document.querySelector(".audiofile_pre");
-                if (o !== null) {
-                    socket.send(JSON.stringify({
-                        command: 'private_chat_with_image',
-                        images: C,
-                        msg: value,
-                        reply_id: reply_id,
-                        reply_user:reply_user
-                    }))
-                } else if (r !== null) {
-                    socket.send(JSON.stringify({
-                        command: 'private_chat_with_file',
-                        files: L,
-                        msg: value,
-                        reply_id: reply_id,
-                        reply_user:reply_user
-                    }))
-                } else if (c !== null) {
-                    socket.send(JSON.stringify({
-                        command: 'private_chat_with_audio',
-                        audio: S,
-                        msg: value,
-                        reply_id: reply_id,
-                        reply_user:reply_user
-                    }))
-                } else if (value) {
-                    socket.send(JSON.stringify({
-                        command: 'private_chat',
-                        msg: value,
-                        reply_id: reply_id,
-                        reply_user:reply_user
-                    }))
-                }
-
-                (g.value = ""),
-                document.querySelector(".image_pre") &&
-                document.querySelector(".image_pre").remove(),
-                    (document.getElementById("galleryfile-input").value = ""),
-                document.querySelector(".attchedfile_pre") &&
-                document.querySelector(".attchedfile_pre").remove(),
-                    (document.getElementById("attachedfile-input").value = ""),
-                document.querySelector(".audiofile_pre") &&
-                document.querySelector(".audiofile_pre").remove(),
-                    (document.getElementById("audiofile-input").value = ""),
-                    document.getElementById("close_toggle").click();
-            })
-            g.addEventListener('keypress', () => {
-                socket.send(JSON.stringify({
-                    command: 'typing'
-                }))
-            })
         });
+    let l = document.querySelector("#chatinput-form"),
+        g = document.querySelector("#chat-input"),
+        u = document.getElementById('submit-btn')
 
+    socket.onmessage = function (e) {
+        let message = JSON.parse(e.data);
+        if (message.type === 'typing' && message.user !== user2) {
+            document.getElementById('activity').innerText = 'typing..'
+            setTimeout(function () {
+                document.getElementById('activity').innerText = ''
+            }, 3000)
+        } else if (message.command === 'private_chat') {
+            chatArrange(message, user2)
+        }
+    }
+    l.addEventListener('submit', (e) => {
+        e.preventDefault()
+    })
+    u.addEventListener('click', (e) => {
+        e.preventDefault();
+        let value = g.value,
+            o = document.querySelector(".image_pre"),
+            r = document.querySelector(".attchedfile_pre"),
+            replycard = document.querySelector('.replyCard'),
+            reply_id = replycard ? replycard.id : null,
+            reply_user = replycard ? replycard.getAttribute('data-user') : null;
+        c = document.querySelector(".audiofile_pre");
+        if (o !== null) {
+            socket.send(JSON.stringify({
+                command: 'private_chat_with_image',
+                images: C,
+                msg: value,
+                reply_id: reply_id,
+                reply_user: reply_user
+            }))
+        } else if (r !== null) {
+            socket.send(JSON.stringify({
+                command: 'private_chat_with_file',
+                files: L,
+                msg: value,
+                reply_id: reply_id,
+                reply_user: reply_user
+            }))
+        } else if (c !== null) {
+            socket.send(JSON.stringify({
+                command: 'private_chat_with_audio',
+                audio: S,
+                msg: value,
+                reply_id: reply_id,
+                reply_user: reply_user
+            }))
+        } else if (value) {
+            socket.send(JSON.stringify({
+                command: 'private_chat',
+                msg: value,
+                reply_id: reply_id,
+                reply_user: reply_user
+            }))
+        }
+
+        (g.value = ""),
+        document.querySelector(".image_pre") &&
+        document.querySelector(".image_pre").remove(),
+            (document.getElementById("galleryfile-input").value = ""),
+        document.querySelector(".attchedfile_pre") &&
+        document.querySelector(".attchedfile_pre").remove(),
+            (document.getElementById("attachedfile-input").value = ""),
+        document.querySelector(".audiofile_pre") &&
+        document.querySelector(".audiofile_pre").remove(),
+            (document.getElementById("audiofile-input").value = ""),
+            document.getElementById("close_toggle").click();
+    })
+    document.getElementById("chat-input").focus();
+
+    g.addEventListener('keypress', () => {
+        socket.send(JSON.stringify({
+            command: 'typing'
+        }))
+    })
 }
 
 function chatArrange(message, user2) {
+
     function p() {
         let t = document
                 .querySelector('.remove')
@@ -321,7 +371,7 @@ function chatArrange(message, user2) {
 
     function H(e, t, a, s, i, j) {
         let l = '<div class="ctext-wrap">',
-            f = j && message.sender.username !== j.sender.username ? j.sender.first_name : 'You';
+            f = j && message.sender.username !== j.sender.username ? j.sender.first_name : 'You:';
         q = j ? `<div class="replymessage-block mb-0 d-flex align-items-start">
     <div class="flex-grow-1"><h5 class="conversation-name">${f}</h5><p class="mb-0">${j.msg}</p></div>
     <div class="flex-shrink-0">
@@ -340,9 +390,7 @@ function chatArrange(message, user2) {
                 l +=
                     '<div class="message-img-list"><div><a class="popup-img d-inline-block" href="' +
                     a[T] +
-                    '">                <img src="' +
-                    a[T] +
-                    '" alt="" class="rounded border"></a></div><div class="message-img-link"><ul class="list-inline mb-0"><li class="list-inline-item dropdown"><a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">                      <i class="bx bx-dots-horizontal-rounded"></i></a><div class="dropdown-menu">                  <a class="dropdown-item d-flex align-items-center justify-content-between" href="' +
+                    '">                <img src="/assets/images/users/user-dummy-img.jpg" alt="" class="rounded border"></a></div><div class="message-img-link"><ul class="list-inline mb-0"><li class="list-inline-item dropdown"><a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">                      <i class="bx bx-dots-horizontal-rounded"></i></a><div class="dropdown-menu">                  <a class="dropdown-item d-flex align-items-center justify-content-between" href="' +
                     a[T] +
                     '" download>Download <i class="bx bx-download ms-2 text-muted"></i></a><a class="dropdown-item d-flex align-items-center justify-content-between"  href="#" data-bs-toggle="collapse" data-bs-target=".replyCollapse">Reply <i class="bx bx-share ms-2 text-muted"></i></a>                  <a class="dropdown-item d-flex align-items-center justify-content-between" href="#" data-bs-toggle="modal" data-bs-target=".forwardModal">Forward <i class="bx bx-share-alt ms-2 text-muted"></i></a>                  <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Bookmark <i class="bx bx-bookmarks text-muted ms-2"></i></a>                  <a class="dropdown-item d-flex align-items-center justify-content-between delete-image" href="#">Delete <i class="bx bx-trash ms-2 text-muted"></i></a></div>              </li>          </ul>        </div>      </div>';
             l += "</div>";
@@ -364,20 +412,19 @@ function chatArrange(message, user2) {
         );
     }
 
-    let a, i;
+    let a, i, s;
     a = message.sender.username === user2 ? ' right' : ' left';
+    s = message.reply ? message.reply : null;
     (i =
         '<li class="chat-list' +
         a +
         '" id=" chat-' +
         message.id +
-        '">                        <div class="conversation-list">'),
-    message.sender.username !== user2 &&
-    (i +=
-        '<div class="chat-avatar"><img src="' +
-        message.sender.avatar +
-        '" alt=""></div>'),
-        (i += '<div class="user-chat-content">'),
+        '">                        <div class="conversation-list">');
+    if (message.sender.username !== user2) {
+        i += message.sender.profile.avatar ? `<div class="chat-avatar"><img src="${message.sender.profile.avatar}" alt=""></div>` : `<div class="chat-avatar"><img src="/assets/images/users/user-dummy-img.jpg" alt=""></div>`;
+    }
+    (i += '<div class="user-chat-content">'),
         (i += H(
             message.id,
             message.msg,
@@ -393,7 +440,7 @@ function chatArrange(message, user2) {
         (i += "</div>                </div>            </li>");
     document.querySelector('.chat-conversation-list').insertAdjacentHTML('beforeend', i);
     document.querySelector(`#reply-message-${message.id}`).addEventListener('click', (s) => {
-        let i = document.querySelector(".replyCard"),
+        let i = document.querySelector("#reply"),
             o = document.querySelector("#close_toggle");
 
         i.classList.add("show")
@@ -403,21 +450,16 @@ function chatArrange(message, user2) {
             i.classList.remove("show");
         });
         document.getElementById("chat-input").focus();
-        let e = document.getElementById(`${message.id}`).innerText
-        document.querySelector(
-            ".replyCard .replymessage-block .flex-grow-1 .mb-0"
-        ).innerText = e;
-        let t = document.querySelector(".user-profile-show").innerHTML,
-            a = "You";
-        document.querySelector(
-            ".replyCard .replymessage-block .flex-grow-1 .conversation-name"
-        ).innerText = a;
+        let e = document.getElementById(`${message.id}`).innerText,
+            a = message.sender.username !== user2 ? message.sender.first_name : 'You:';
+        document.querySelector('#reply_text').innerText = e;
+        document.querySelector('#reply_user').innerText = a;
     })
     p()
 }
 
 function conversatonSettings(type, data) {
-    let a = type === 'group' ? `<div id="channel-chat" class="position-relative">
+    let a = type === 'group' ? `<div id="channel-chat" class="remove position-relative">
                         <div class="p-3 p-lg-4 user-chat-topbar">
                             <div class="row align-items-center">
                                 <div class="col-sm-4 col-8">
@@ -428,7 +470,7 @@ function conversatonSettings(type, data) {
                                         <div class="flex-grow-1 overflow-hidden">
                                             <div class="d-flex align-items-center">                            
                                                 <div class="flex-shrink-0 chat-user-img online user-own-img align-self-center me-3">
-                                                    <img src="assets/images/users/user-dummy-img.jpg" class="rounded-circle avatar-sm" alt="">                            
+                                                <span class="avatar-title rounded-circle bg-soft-light text-dark">#</span>                         
                                                 </div>
                                                 <div class="flex-grow-1 overflow-hidden">
                                                     <h6 class="text-truncate mb-0 font-size-18"><a href="#" class="user-profile-show text-reset">Design Phase 2</a></h6>
@@ -648,5 +690,3 @@ function f() {
 function F() {
     GLightbox({selector: ".popup-img", title: !1});
 }
-
-//

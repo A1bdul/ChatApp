@@ -10,8 +10,8 @@ from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from App.models import ChatRoom, PrivateMessage, Group
-from App.serializers import ChatRoomSerializers, RoomMessageSerializers, HomeFeedSerializers
+from App.models import ChatRoom, PrivateMessage, Group, GroupMessages
+from App.serializers import ChatRoomSerializers, RoomMessageSerializers, HomeFeedSerializers, GroupMessageSerializer
 from user.models import User
 from collections import namedtuple
 
@@ -40,10 +40,19 @@ def api_room_messages(request, username):
 @api_view(['GET'])
 def api_all_rooms(request):
     user = request.user
-    all_rooms = namedtuple('RoomType', ['private_chat', 'group_chat'])
+    all_rooms = namedtuple('RoomType', ['favourite_users', 'usersList', 'channelList'])
     rooms = all_rooms(
-        private_chat=ChatRoom.objects.filter(Q(user1=user) | Q(user2=user)),
-        group_chat=Group.objects.filter(members__participant=user)
+        favourite_users=user.profile.favourite.all(),
+        usersList=ChatRoom.objects.filter(Q(user1=user) | Q(user2=user)).exclude(Q(favourite__favourite__user1=user)|Q(favourite__favourite__user2=user)),
+        channelList=Group.objects.filter(members__participant=user)
     )
     instance = HomeFeedSerializers(rooms).data
+    return Response(instance)
+
+
+@api_view(['GET', ])
+def api_group_messages(request, group_id):
+    group = Group.objects.get(id=group_id)
+    messages = GroupMessages.manage.get_queryset(room=group)
+    instance = GroupMessageSerializer(messages, many=True).data
     return Response(instance)
