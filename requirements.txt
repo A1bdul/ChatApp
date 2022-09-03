@@ -1,0 +1,6 @@
+channels==3.0.5
+cloudinary==1.29.0
+Django==4.1
+djangorestframework==3.13.1
+Pillow==9.2.0
+pyasn1==0.4.8
