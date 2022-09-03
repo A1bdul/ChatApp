@@ -3,5 +3,10 @@ A web chatting application with Python Django
 
 # Requirements
     Django rest framework
+
+    Channels
     
-    channels
+    Cloudinary
+
+
+ https://byabdul.herokuapp.com

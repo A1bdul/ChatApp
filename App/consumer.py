@@ -33,7 +33,7 @@ class AppChatConsumer(AsyncJsonWebsocketConsumer):
                 'user': self.scope['user']
             })
         if command == 'private_chat':
-            if content.get('reply_id'):
+            if content.get('reply_id') is not None:
                 self.reply = await sync_to_async(PrivateMessage.objects.get)(id=content.get('reply_id'))
 
                 self.newmsg = await sync_to_async(PrivateMessage.objects.create)(room=self.chat_room, reply=self.reply,
@@ -52,7 +52,7 @@ class AppChatConsumer(AsyncJsonWebsocketConsumer):
                 "command": command,
                 "created_at": self.newmsg.created_at.strftime("%H:%M"),
             }
-            if self.reply:
+            if content.get('reply_id') is not None:
                 data['reply'] = self.reply
                 data['reply_from'] = self.reply_from
             await self.channel_layer.group_send(self.room_name, data)
@@ -78,7 +78,7 @@ class AppChatConsumer(AsyncJsonWebsocketConsumer):
             "created_at": event["created_at"],
             'reply': None
         }
-        if self.reply:
+        if event.get('reply') is not None:
             message['reply'] = {
                 'id': event['reply'].id,
                 'msg': event['reply'].msg,
@@ -107,6 +107,15 @@ class GroupChatConsumer(AsyncJsonWebsocketConsumer):
         await self.channel_layer.group_add(self.group_room_name, self.channel_name)
 
     async def receive_json(self, content, **kwargs):
-        command = content.get('type', None)
-        print(command)
+        command = content.get('command', None)
+
+        if command == 'private_chat':
+            await self.channel_layer.group_send(self.group_room_name, {
+                'type': 'channel_chat'
+            })
+
+    async def channel_chat(self, event):
+        await self.send_json({
+            'command': event['type']
+        })
 

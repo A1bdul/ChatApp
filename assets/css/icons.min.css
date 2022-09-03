@@ -20313,8 +20313,8 @@
 
 @font-face {
     font-family: remixicon;
-    src: url(../fonts/remixicon.eot?t=1580819880586);
-    src: url(../fonts/remixicon.eot?t=1580819880586#iefix) format("embedded-opentype"), url(../fonts/remixicon.woff2?t=1580819880586) format("woff2"), url(../fonts/remixicon.woff?t=1580819880586) format("woff"), url(../fonts/remixicon.ttf?t=1580819880586) format("truetype"), url(../fonts/remixicon.svg?t=1580819880586#remixicon) format("svg");
+    src: url(../fonts/remixicon.eot);
+    src: url(../fonts/remixicon.eot?t=1580819880586#iefix) format("embedded-opentype"), url(../fonts/remixicon.woff2) format("woff2"), url(../fonts/remixicon.woff) format("woff"), url(../fonts/remixicon.ttf) format("truetype"), url(../fonts/remixicon.svg) format("svg");
     font-display: swap
 }
 

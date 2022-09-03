@@ -11,23 +11,62 @@
 <div class="contact-list-title">
                                     ${contacts}
                                     </div>
-                                    <ul class="list-unstyled contact-list">`
+                                    <ul class="list-unstyled contact-list">`,
+                        e = `
+
+<div>
+                                                                    <div class="contact-list-title">
+                                                                        ${contacts}
+                                                                    </div>
+
+                                                                    <ul class="list-unstyled contact-list">`;
                     for (const user in contact) {
                         if (contact.hasOwnProperty(user)) {
-                            i += (`<li>
+
+                            i += (`<li style="cursor:pointer;">
                             <div>
-                                <h5 class="font-size-14 m-0" style="cursor:pointer;">${contact[user].first_name} ${contact[user].last_name}</h5>
+                                <h5 class="font-size-14 m-0" >${contact[user].first_name} ${contact[user].last_name}</h5>
                             </div>
                         </li>`)
+                            e += (
+                                `<li>
+                                                                            <div class="form-check">
+                                                                                <input type="checkbox" class="form-check-input" id="memberCheck1">
+                                                                                <label class="form-check-label" for="memberCheck1">${contact[user].first_name} ${contact[user].last_name}</label>
+                                                                            </div>
+                                                                        </li>`
+                            )
                         }
                     }
                     i += (` </ul>
-                                </div>`);
+                                </div>`)
+                    e += (`</ul></div>`);
+
                     document.getElementById('contactList').insertAdjacentHTML('beforeend', i)
+                    document.getElementById('group-members').insertAdjacentHTML('beforeend', e)
                 }
             }
+
+            document
+                .querySelectorAll(".contact-modal-list .contact-list li")
+                .forEach(function (e) {
+                    e.addEventListener("click", function () {
+                        e.classList.toggle("selected");
+                    });
+                }),
+                document.body.addEventListener("click", function () {
+                    new bootstrap.Collapse(i, {toggle: !1}).hide();
+                }),
+            i &&
+            document
+                .querySelectorAll(".contact-modal-list .contact-list li")
+                .forEach(function (e) {
+                    e.addEventListener("click", function () {
+                        e.classList.toggle("selected");
+                    });
+                })
         })
-    
+
     fetch('/user-api', {
         method: 'GET',
     })
@@ -37,7 +76,7 @@
             document.querySelectorAll('.user-email').forEach(link => link.innerHTML = main.email)
             let avatar = main.profile.avatar ? main.profile.avatar : '/assets/images/users/user-dummy-img.jpg'
             document.querySelectorAll('.user-image').forEach(link => link.src = avatar)
-            document.querySelectorAll('.user-about').forEach(link => link.innerHTML = main.bio)
+            document.querySelectorAll('.user-about').forEach(link => link.innerHTML = main.profile.bio)
             fetch('/api/all-room', {
                 method: 'GET'
             })
@@ -49,8 +88,7 @@
                             }
                         }
                         let group_chat = room.channelList,
-                            rooms = Object.assign(room.favourite_users, room.usersList)
-                        console.log(rooms)
+                            rooms = room.usersList;
                         document.getElementById("empty-conversation").style.display = "block";
                         for (const chat in group_chat) {
                             if (group_chat.hasOwnProperty(chat)) {
@@ -82,9 +120,6 @@
                             );
                             e.scrollTop = e.scrollHeight;
                         });
-
-                        let profile_info = document.querySelector(".user-profile-sidebar"),
-                            i = document.getElementById("chatinputmorecollapse");
                         f()
 
                         function p() {
@@ -100,7 +135,8 @@
                                     : 0;
                             a && t.scrollTo({top: a, behavior: "smooth"});
                         }
-
+                        let profile_info = document.querySelector('.user-profile-sidebar')
+                            i = document.getElementById("chatinputmorecollapse");
                         document.body.addEventListener("click", function () {
                             new bootstrap.Collapse(i, {toggle: !1}).hide();
                         }),
@@ -114,31 +150,15 @@
                                     1024: {slidesPerView: 6},
                                 },
                             });
-                        }),
-                            document
-                                .querySelectorAll(".contact-modal-list .contact-list li")
-                                .forEach(function (e) {
-                                    e.addEventListener("click", function () {
-                                        e.classList.toggle("selected");
-                                    });
-                                }),
-                            document.body.addEventListener("click", function () {
-                                new bootstrap.Collapse(i, {toggle: !1}).hide();
-                            }),
-                        i &&
-                        document
-                            .querySelectorAll(".contact-modal-list .contact-list li")
-                            .forEach(function (e) {
-                                e.addEventListener("click", function () {
-                                    e.classList.toggle("selected");
-                                });
-                            })
+                        })
 
                         let chats = document.querySelectorAll('.users-chatlist');
                         chats.forEach(function (e) {
                             e.addEventListener('click', () => {
                                 conversatonSettings(e)
-                                const user = e.id;
+                                const user = e.id,
+                                    type = e.getAttribute('data-name'),
+                                    rooms = room[type];
                                 conversatonSettings('users', rooms[user])
                                 const is_user = (main.username !== rooms[user]['user1'].username) ? rooms[user]['user1'] : rooms[user]['user2'];
                                 let a = is_user["first_name"],
@@ -239,7 +259,7 @@ function chatList(type, rooms, main) {
                 l = 2 === rooms[user]['id'] ? "active" : "";
             document.getElementById(`${type}`).insertAdjacentHTML('afterbegin', '<li class="users-chatlist chatlist' + rooms[user]['id'] + '" id=' +
                 user +
-                ' data-name="direct-message">                  ' +
+                ' data-name='+type+'>                  ' +
                 i +
                 '                   <div class="d-flex align-items-center">                      <div class="chat-user-img online align-self-center me-2 ms-0">                          ' +
                 a +
@@ -275,7 +295,6 @@ function connectSocket(type, chatId, user2) {
     let l = document.querySelector("#chatinput-form"),
         g = document.querySelector("#chat-input"),
         u = document.getElementById('submit-btn')
-
     socket.onmessage = function (e) {
         let message = JSON.parse(e.data);
         if (message.type === 'typing' && message.user !== user2) {
@@ -285,19 +304,19 @@ function connectSocket(type, chatId, user2) {
             }, 3000)
         } else if (message.command === 'private_chat') {
             chatArrange(message, user2)
+        }else {
+            console.log(message)
         }
     }
     l.addEventListener('submit', (e) => {
-        e.preventDefault()
-    })
-    u.addEventListener('click', (e) => {
         e.preventDefault();
         let value = g.value,
             o = document.querySelector(".image_pre"),
             r = document.querySelector(".attchedfile_pre"),
-            replycard = document.querySelector('.replyCard'),
-            reply_id = replycard ? replycard.id : null,
-            reply_user = replycard ? replycard.getAttribute('data-user') : null;
+            replycard = document.querySelector('#reply'),
+            reply_id = replycard.getAttribute('dataid') ? replycard.getAttribute('dataid') : null,
+            reply_user = replycard.getAttribute('dataid') ? replycard.getAttribute('data-user') : null;
+        replycard.removeAttribute('dataid')
         c = document.querySelector(".audiofile_pre");
         if (o !== null) {
             socket.send(JSON.stringify({
@@ -444,7 +463,7 @@ function chatArrange(message, user2) {
             o = document.querySelector("#close_toggle");
 
         i.classList.add("show")
-        i.setAttribute('id', `${message.id}`)
+        i.setAttribute('dataid', `${message.id}`)
         i.setAttribute('data-user', `${message.sender.username}`)
         o.addEventListener("click", function () {
             i.classList.remove("show");
@@ -538,9 +557,6 @@ function conversatonSettings(type, data) {
                         <div class="chat-conversation p-3 p-lg-4" id="chat-conversation" data-simplebar>
                             <ul class="list-unstyled chat-conversation-list" id="channel-conversation">       
                             </ul>
-                        </div>
-                        <div class="alert alert-warning alert-dismissible copyclipboard-alert px-4 fade show " id="copyClipBoardChannel" role="alert">
-                            message copied
                         </div>
                         <!-- end chat conversation end -->
                         </div>` : `<div id="channel-chat" class="remove position-relative">
