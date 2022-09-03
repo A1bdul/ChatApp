@@ -1,7 +1,5 @@
 import uuid
-
 from django.db import models
-from django.db.models import Q
 from user.models import User, ChatRoom
 
 
@@ -28,6 +26,7 @@ class MessageManager(models.Manager):
 
 
 class Album(models.Model):
+    """ upload images to the cloudinary storage and storing the url in database"""
     images = models.URLField()
 
     def __str__(self):
@@ -35,10 +34,12 @@ class Album(models.Model):
 
 
 class Folder(models.Model):
+    """ upload files to the cloudinary storage and storing the url in database"""
     files = models.URLField()
 
 
 class DefaultMessages(BaseModel):
+    """ Basis of all message model regardless of weather group or private room"""
     sender = models.ForeignKey(User, related_name='sender', on_delete=models.SET_NULL, null=True)
     msg = models.TextField(blank=True, null=True)
     reply = models.ForeignKey('self', null=True, blank=True, related_name='replies', on_delete=models.SET_NULL)
@@ -47,11 +48,17 @@ class DefaultMessages(BaseModel):
 
 
 class Member(models.Model):
+    """ Model for the members in the group chat, the is_admin attribute handles
+        if member can do certain function to group
+    """
     participant = models.ForeignKey(User, on_delete=models.CASCADE)
     is_admin = models.BooleanField(default=False)
 
 
 class Group(BaseModel):
+    """
+        Group Chat models
+    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
     icon = models.ImageField(blank=True, null=True)
     name = models.CharField(max_length=200)
@@ -59,6 +66,10 @@ class Group(BaseModel):
 
 
 class GroupMessages(DefaultMessages):
+    """
+        Deriving from default messages and assigning to the already
+        created a group chat
+    """
     room = models.ForeignKey(Group, on_delete=models.CASCADE)
     read_by = models.ManyToManyField(Member)
 
@@ -71,6 +82,10 @@ class GroupMessages(DefaultMessages):
 
 
 class PrivateMessage(DefaultMessages):
+    """
+        Deriving from default messages and assigning to the already
+        created a private chat room
+    """
     room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE)
     read = models.ManyToManyField(User)
 

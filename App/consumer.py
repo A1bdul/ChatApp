@@ -15,6 +15,8 @@ class AppChatConsumer(AsyncJsonWebsocketConsumer):
         self.chat_room = None
 
     async def connect(self):
+        """ Handles connection with websocket """
+        # checks if both users are authenticated then gets or create their chatroom
         self.me = await sync_to_async(User.objects.get)(username=self.scope['user'])
         self.user2 = await sync_to_async(User.objects.get)(username=self.scope['url_route']['kwargs']['username'])
         await self.accept()
@@ -24,16 +26,20 @@ class AppChatConsumer(AsyncJsonWebsocketConsumer):
         await sync_to_async(PrivateMessage.manage.read_all_message)(room=self.chat_room, user=self.me)
 
     async def receive_json(self, content, **kwargs):
+        """ Handles all incoming message from websocket, each command is assigned to it own
+            'type' function for exceution
+        """
         command = content.get('command')
         message = content.get('msg', None)
 
         if command == 'typing':
             await self.channel_layer.group_send(self.room_name, {
-                'type': 'websocket_typing',
+                'type': 'websocket_typing',  # Create a function with the name of the value in your type key
                 'user': self.scope['user']
             })
         if command == 'private_chat':
             if content.get('reply_id') is not None:
+                # if this message is replying to a previous chat, assign reply to message in database
                 self.reply = await sync_to_async(PrivateMessage.objects.get)(id=content.get('reply_id'))
 
                 self.newmsg = await sync_to_async(PrivateMessage.objects.create)(room=self.chat_room, reply=self.reply,
@@ -58,12 +64,15 @@ class AppChatConsumer(AsyncJsonWebsocketConsumer):
             await self.channel_layer.group_send(self.room_name, data)
 
     async def websocket_typing(self, event):
+        """ handles all websocket typing command """
         await self.send_json({
+            # send back message to the websocket ...
             'type': 'typing',
             'user': event['user'].username
         })
 
     async def websocket_private_chat(self, event):
+        """ Handles all private chat message incoming from websocket """
         message = {
             'sender': {
                 "username": event["username"],
