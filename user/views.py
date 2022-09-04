@@ -19,7 +19,7 @@ def api_user(request):
 def api_contacts(request):
     data = defaultdict(list)
     for i in string.ascii_uppercase:
-        contacts = request.user.profile.contacts.filter(user__last_name__startswith=i)
-        for user in contacts:
-            data[i].append(UserInfoSerializer(user.user).data)
+        contacts = request.user.contacts.filter(first_name__startswith=i)
+        for contact in contacts:
+            data[i].append(UserInfoSerializer(contact).data)
     return Response(data)

@@ -20,8 +20,8 @@ class UserManager(BaseUserManager):
         email = self.normalize_email(email)
         user = self.model(email=email, username=username, **extra_fields)
         user.set_password(password)
-        Profile.objects.create(user=user)
         user.save()
+        Profile.objects.create(user=user)
         return user
 
     def create_superuser(self, email, username, password, **extra_fields):
@@ -43,6 +43,7 @@ class User(AbstractUser):
     email = models.CharField(max_length=200, unique=True)
     password = models.CharField(max_length=200)
 
+    contacts = models.ManyToManyField('self', symmetrical=False, related_name='contact', blank=True)
     objects = UserManager()
 
     REQUIRED_FIELDS = 'username',
@@ -86,5 +87,3 @@ class Profile(models.Model):
     avatar = models.ImageField(blank=True, null=True, upload_to='avatars')
     cover_image = models.ImageField(blank=True, null=True, upload_to='cover_image')
     favourite = models.ManyToManyField(ChatRoom, blank=True, related_name='favourite')
-    contacts = models.ManyToManyField('self', symmetrical=False, related_name='contact', blank=True)
-    block_list = models.ManyToManyField('self', symmetrical=False, related_name='blocked', blank=True)

@@ -1,18 +1,14 @@
 from django.db.models import Q
 from django.shortcuts import render
 
-# Create your views here.
-# class IndexView(View):
-#     template_name = 'index.html'
-#
-#     def get(self, request):
-#         return render(request, self.template_name)
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from App.models import ChatRoom, PrivateMessage, Group, GroupMessages
 from App.serializers import ChatRoomSerializers, RoomMessageSerializers, HomeFeedSerializers, GroupMessageSerializer
+
 from user.models import User
+
 from collections import namedtuple
 
 

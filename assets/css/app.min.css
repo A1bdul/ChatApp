@@ -2595,4 +2595,6 @@ body[data-layout-mode=dark] .signin-other-title::after {
     background-color: #2e2e2e
 }
 
-/*# sourceMappingURL=app.min.css.map */
+#activity{
+ transition: all .3s ease;
+}

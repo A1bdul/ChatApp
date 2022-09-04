@@ -284,8 +284,8 @@ document
 
 
 function removeImage(e) {
-    document.querySelector("#" + e).remove(),
-    0 == document.querySelectorAll(".image-remove").length &&
+    document.querySelector("#" + e).remove();
+    0 === document.querySelectorAll(".image-remove").length &&
     document.querySelector(".file_Upload").classList.remove("show");
 }
 

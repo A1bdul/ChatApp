@@ -42,8 +42,8 @@
                                 </div>`)
                     e += (`</ul></div>`);
 
-                    document.getElementById('contactList').insertAdjacentHTML('beforeend', i)
-                    document.getElementById('group-members').insertAdjacentHTML('beforeend', e)
+                    document.getElementById('contactList').innerHTML += i;
+                    document.getElementById('group-members').innerHTML += e
                 }
             }
 
@@ -275,7 +275,6 @@ function chatList(type, rooms, main) {
     }
 }
 
-
 function connectSocket(type, chatId, user2) {
     let url = type === 'group' ? `ws://${window.location.host}/ws/group/${chatId}` : `ws://${window.location.host}/ws/${chatId}`,
         message_url = type === 'group' ? 'api/group-message/' + chatId : `api/room-messages/${chatId}`,
@@ -302,10 +301,8 @@ function connectSocket(type, chatId, user2) {
             setTimeout(function () {
                 document.getElementById('activity').innerText = ''
             }, 3000)
-        } else if (message.command === 'private_chat') {
+        } else if (message.command === 'private_chat'||'group_chat') {
             chatArrange(message, user2)
-        }else {
-            console.log(message)
         }
     }
     l.addEventListener('submit', (e) => {
@@ -318,43 +315,21 @@ function connectSocket(type, chatId, user2) {
             reply_user = replycard.getAttribute('dataid') ? replycard.getAttribute('data-user') : null;
         replycard.removeAttribute('dataid')
         c = document.querySelector(".audiofile_pre");
-        if (o !== null) {
-            socket.send(JSON.stringify({
-                command: 'private_chat_with_image',
+        let send_message =  {
                 images: C,
-                msg: value,
-                reply_id: reply_id,
-                reply_user: reply_user
-            }))
-        } else if (r !== null) {
-            socket.send(JSON.stringify({
-                command: 'private_chat_with_file',
                 files: L,
-                msg: value,
-                reply_id: reply_id,
-                reply_user: reply_user
-            }))
-        } else if (c !== null) {
-            socket.send(JSON.stringify({
-                command: 'private_chat_with_audio',
                 audio: S,
                 msg: value,
                 reply_id: reply_id,
                 reply_user: reply_user
-            }))
-        } else if (value) {
-            socket.send(JSON.stringify({
-                command: 'private_chat',
-                msg: value,
-                reply_id: reply_id,
-                reply_user: reply_user
-            }))
-        }
-
+            }
+            send_message['command'] = type !== 'group'? 'private_chat':'group_chat';
+        socket.send(JSON.stringify(send_message));
         (g.value = ""),
         document.querySelector(".image_pre") &&
         document.querySelector(".image_pre").remove(),
             (document.getElementById("galleryfile-input").value = ""),
+            console.log(document.getElementById('galleryfile-input').value)
         document.querySelector(".attchedfile_pre") &&
         document.querySelector(".attchedfile_pre").remove(),
             (document.getElementById("attachedfile-input").value = ""),
@@ -373,7 +348,6 @@ function connectSocket(type, chatId, user2) {
 }
 
 function chatArrange(message, user2) {
-
     function p() {
         let t = document
                 .querySelector('.remove')
@@ -390,8 +364,8 @@ function chatArrange(message, user2) {
 
     function H(e, t, a, s, i, j) {
         let l = '<div class="ctext-wrap">',
-            f = j && message.sender.username !== j.sender.username ? j.sender.first_name : 'You:';
-        q = j ? `<div class="replymessage-block mb-0 d-flex align-items-start">
+            f = j && message.sender.username !== j.sender.username ? j.sender.first_name : 'You:',
+            q = j ? `<div class="replymessage-block mb-0 d-flex align-items-start">
     <div class="flex-grow-1"><h5 class="conversation-name">${f}</h5><p class="mb-0">${j.msg}</p></div>
     <div class="flex-shrink-0">
         <button type="button" class="btn btn-sm btn-link mt-n2 me-n3 font-size-18"></button>
@@ -414,6 +388,7 @@ function chatArrange(message, user2) {
                     '" download>Download <i class="bx bx-download ms-2 text-muted"></i></a><a class="dropdown-item d-flex align-items-center justify-content-between"  href="#" data-bs-toggle="collapse" data-bs-target=".replyCollapse">Reply <i class="bx bx-share ms-2 text-muted"></i></a>                  <a class="dropdown-item d-flex align-items-center justify-content-between" href="#" data-bs-toggle="modal" data-bs-target=".forwardModal">Forward <i class="bx bx-share-alt ms-2 text-muted"></i></a>                  <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Bookmark <i class="bx bx-bookmarks text-muted ms-2"></i></a>                  <a class="dropdown-item d-flex align-items-center justify-content-between delete-image" href="#">Delete <i class="bx bx-trash ms-2 text-muted"></i></a></div>              </li>          </ul>        </div>      </div>';
             l += "</div>";
         } else
+
             0 < s.length &&
             (l +=
                 '<div class="ctext-wrap-content">            <div class="p-3 border-primary border rounded-3">            <div class="d-flex align-items-center attached-file">                <div class="flex-shrink-0 avatar-sm me-3 ms-0 attached-file-avatar">                    <div class="avatar-title bg-soft-primary text-primary rounded-circle font-size-20">                        <i class="ri-attachment-2"></i>                    </div>                </div>                <div class="flex-grow-1 overflow-hidden">                    <div class="text-start">                        <h5 class="font-size-14 mb-1">design-phase-1-approved.pdf</h5>                        <p class="text-muted text-truncate font-size-13 mb-0">12.5 MB</p>                    </div>                </div>                <div class="flex-shrink-0 ms-4">                    <div class="d-flex gap-2 font-size-20 d-flex align-items-start">                        <div>                            <a href="#" class="text-muted">                                <i class="bx bxs-download"></i>                            </a>                        </div>                    </div>                </div>             </div>            </div>            </div>            <div class="dropdown align-self-start message-box-drop">                <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">                    <i class="ri-more-2-fill"></i>                </a>                <div class="dropdown-menu">                  <a class="dropdown-item d-flex align-items-center justify-content-between"  href="' +
@@ -473,6 +448,15 @@ function chatArrange(message, user2) {
             a = message.sender.username !== user2 ? message.sender.first_name : 'You:';
         document.querySelector('#reply_text').innerText = e;
         document.querySelector('#reply_user').innerText = a;
+    })
+    document.getElementById(`copy-message-${message.id}`).addEventListener('click', () => {
+        let e = document.getElementById(`${message.id}`).innerText;
+        navigator.clipboard.writeText(e)
+        document.getElementById("chat-input").focus();
+        document.getElementById('copyClipBoard').style.display = 'block'
+        setTimeout(() => {
+            document.getElementById('copyClipBoard').style.display = 'none'
+        }, 1e3)
     })
     p()
 }
@@ -650,6 +634,9 @@ function conversatonSettings(type, data) {
                         <ul class="list-unstyled chat-conversation-list" id="users-conversation">
                         </ul>
                     </div>
+                     <div class="alert alert-warning alert-dismissible copyclipboard-alert px-4 fade show " style="display:none;" id="copyClipBoard" role="alert">
+                            message copied
+                        </div>
                     <!-- end chat conversation end -->
                     </div>`;
     document.getElementById("empty-conversation").innerHTML = (a);

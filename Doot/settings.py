@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'user.apps.UserConfig',
-    'App',
+    'App.apps.AppConfig',
     'rest_framework',
     'channels',
     'cloudinary',
