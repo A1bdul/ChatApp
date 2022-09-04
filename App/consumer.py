@@ -1,5 +1,6 @@
+import os
 from typing import List, Any
-
+from dotenv import load_dotenv
 import cloudinary
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from user.models import User
@@ -7,6 +8,7 @@ from App.models import ChatRoom, PrivateMessage, Group, Album, GroupMessages
 from asgiref.sync import sync_to_async, async_to_sync
 import threading
 
+load_dotenv()
 
 class CloudinaryUpload(threading.Thread):
     def __init__(self, data, msg):
@@ -16,10 +18,10 @@ class CloudinaryUpload(threading.Thread):
 
     async def start(self) -> List[Any]:
         cloudinary.config(
-            cloud_name='',
-            api_key='',
-            api_secret='',
-            secure=True
+            cloud_name=os.getenv('cloud_name'),
+            api_key=os.getenv('api_key'),
+            api_secret=os.getenv('api_secret'),
+            secure=os.getenv('secure')
         )
         images = []
         for img in self.data:
