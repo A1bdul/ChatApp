@@ -10,6 +10,7 @@ import threading
 
 load_dotenv()
 
+
 class CloudinaryUpload(threading.Thread):
     def __init__(self, data, msg):
         self.data = data
