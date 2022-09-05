@@ -389,7 +389,7 @@ function chatArrange(message, user2) {
         l +=
           '<div class="message-img-list">            <div>              <a class="popup-img d-inline-block" href="' +
           a[T] +
-          '">                <img src="' +
+          '" target="_blank">                <img src="' +
           a[T] +
           '" alt="" class="rounded border">              </a>            </div>            <div class="message-img-link">              <ul class="list-inline mb-0">                <li class="list-inline-item dropdown">                  <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">                      <i class="bx bx-dots-horizontal-rounded"></i>                  </a>                <div class="dropdown-menu">                  <a class="dropdown-item d-flex align-items-center justify-content-between" href="' +
           a[T] +

@@ -28,8 +28,8 @@ class CloudinaryUpload(threading.Thread):
         for img in self.data:
             try:
                 new_img = cloudinary.uploader.upload(img)
-                images.append(new_img.secure_url)
-                image = await sync_to_async(Album.objects.create)(images=new_img.secure_url)
+                images.append(new_img['secure_url'])
+                image = await sync_to_async(Album.objects.create)(images=new_img['secure_url'])
                 await sync_to_async(self.msg.images.add)(image)
             except cloudinary.exceptions.Error as e:
                 image = await sync_to_async(Album.objects.create)(images='/assets/images/small/img-1.jpg')
