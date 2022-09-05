@@ -79,7 +79,7 @@ class RoomMessageSerializers(serializers.Serializer):
     sender = UserInfoSerializer()
     msg = serializers.CharField()
     created_at = serializers.DateTimeField(format='%H:%M')
-    dropdown = serializers.BooleanField(default=True)
+    dropdown = serializers.SerializerMethodField()
     images = AlbumSerializer(many=True, read_only=True)
     files = FileSerializer(many=True, read_only=True)
     id = serializers.IntegerField(read_only=True)
@@ -91,6 +91,10 @@ class RoomMessageSerializers(serializers.Serializer):
             'sender', 'id', 'msg', 'reply', 'created_at', 'images', 'files', 'dropdown'
         ]
 
+    def get_dropdown(self, obj):
+        if obj.images.all():
+            return False
+        return True
 
 class GroupMessageSerializer(serializers.Serializer):
     sender = UserInfoSerializer(read_only=True)

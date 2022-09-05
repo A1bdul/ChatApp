@@ -301,7 +301,9 @@ function connectSocket(type, chatId, user2) {
             setTimeout(function () {
                 document.getElementById('activity').innerText = ''
             }, 3000)
-        } else if (message.command === 'private_chat'||'group_chat') {
+        }
+        if (message.command === 'private_chat') {
+            console.log(message)
             chatArrange(message, user2)
         }
     }
@@ -337,6 +339,8 @@ function connectSocket(type, chatId, user2) {
         document.querySelector(".audiofile_pre").remove(),
             (document.getElementById("audiofile-input").value = ""),
             document.getElementById("close_toggle").click();
+            document.querySelector('.file_Upload').classList.remove('show')
+
     })
     document.getElementById("chat-input").focus();
 
@@ -348,6 +352,7 @@ function connectSocket(type, chatId, user2) {
 }
 
 function chatArrange(message, user2) {
+    console.log(message)
     function p() {
         let t = document
                 .querySelector('.remove')
@@ -378,8 +383,9 @@ function chatArrange(message, user2) {
                 '>' +
                 t +
                 "</p></div>";
-    else if (a && 0 < a.length) {
-      for (l += '<div class="message-img mb-0">', T = 0; T < a.length; T++)
+    else if (a && a.length > 0) {
+        l += '<div class="message-img mb-0">'
+      for (let T = 0; T < a.length; T++){
         l +=
           '<div class="message-img-list">            <div>              <a class="popup-img d-inline-block" href="' +
           a[T] +
@@ -388,6 +394,7 @@ function chatArrange(message, user2) {
           '" alt="" class="rounded border">              </a>            </div>            <div class="message-img-link">              <ul class="list-inline mb-0">                <li class="list-inline-item dropdown">                  <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">                      <i class="bx bx-dots-horizontal-rounded"></i>                  </a>                <div class="dropdown-menu">                  <a class="dropdown-item d-flex align-items-center justify-content-between" href="' +
           a[T] +
           '" download>Download <i class="bx bx-download ms-2 text-muted"></i></a>                  <a class="dropdown-item d-flex align-items-center justify-content-between"  href="#" data-bs-toggle="collapse" data-bs-target=".replyCollapse">Reply <i class="bx bx-share ms-2 text-muted"></i></a>                  <a class="dropdown-item d-flex align-items-center justify-content-between" href="#" data-bs-toggle="modal" data-bs-target=".forwardModal">Forward <i class="bx bx-share-alt ms-2 text-muted"></i></a>                  <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Bookmark <i class="bx bx-bookmarks text-muted ms-2"></i></a>                  <a class="dropdown-item d-flex align-items-center justify-content-between delete-image" href="#">Delete <i class="bx bx-trash ms-2 text-muted"></i></a>                </div>              </li>          </ul>        </div>      </div>';
+      }
       l += "</div>";
     } else
       0 < s.length &&
@@ -399,9 +406,9 @@ function chatArrange(message, user2) {
       !0 === i &&
         (l +=
           '<div class="dropdown align-self-start message-box-drop">                <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">                    <i class="ri-more-2-fill"></i>                </a>                <div class="dropdown-menu">                    <a class="dropdown-item d-flex align-items-center justify-content-between reply-message" href="#" id="reply-message-' +
-          w +
+          e +
           '" data-bs-toggle="collapse" data-bs-target=".replyCollapse">Reply <i class="bx bx-share ms-2 text-muted"></i></a>                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="#" data-bs-toggle="modal" data-bs-target=".forwardModal">Forward <i class="bx bx-share-alt ms-2 text-muted"></i></a>                    <a class="dropdown-item d-flex align-items-center justify-content-between copy-message" href="#" id="copy-message-' +
-          w +
+          e +
           '">Copy <i class="bx bx-copy text-muted ms-2"></i></a>                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Bookmark <i class="bx bx-bookmarks text-muted ms-2"></i></a>                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Mark as Unread <i class="bx bx-message-error text-muted ms-2"></i></a>                    <a class="dropdown-item d-flex align-items-center justify-content-between delete-item" href="#">Delete <i class="bx bx-trash text-muted ms-2"></i></a>                </div>            </div>'),
       (l += "</div>")
         );
@@ -427,30 +434,31 @@ function chatArrange(message, user2) {
             message.files,
             message.dropdown,
             message.reply
-        )),
+        ) ),
         (i +=
             '<div class="conversation-name"><small class="text-muted time">' +
             message.created_at +
             '</small> <span class="text-success check-message-icon"><i class="bx bx-check-double"></i></span></div>'),
         (i += "</div>                </div>            </li>");
     document.querySelector('.chat-conversation-list').insertAdjacentHTML('beforeend', i);
-    document.querySelector(`#reply-message-${message.id}`).addEventListener('click', (s) => {
-        let i = document.querySelector("#reply"),
-            o = document.querySelector("#close_toggle");
+    if (!0 === message.dropdown) {
+        document.getElementById(`reply-message-${message.id}`).addEventListener('click', (s) => {
+            let i = document.querySelector("#reply"),
+                o = document.querySelector("#close_toggle");
 
-        i.classList.add("show")
-        i.setAttribute('dataid', `${message.id}`)
-        i.setAttribute('data-user', `${message.sender.username}`)
-        o.addEventListener("click", function () {
-            i.classList.remove("show");
-        });
-        document.getElementById("chat-input").focus();
-        let e = document.getElementById(`${message.id}`).innerText,
-            a = message.sender.username !== user2 ? message.sender.first_name : 'You:';
-        document.querySelector('#reply_text').innerText = e;
-        document.querySelector('#reply_user').innerText = a;
-    })
-    document.getElementById(`copy-message-${message.id}`).addEventListener('click', () => {
+            i.classList.add("show")
+            i.setAttribute('dataid', `${message.id}`)
+            i.setAttribute('data-user', `${message.sender.username}`)
+            o.addEventListener("click", function () {
+                i.classList.remove("show");
+            });
+            document.getElementById("chat-input").focus();
+            let e = document.getElementById(`${message.id}`).innerText,
+                a = message.sender.username !== user2 ? message.sender.first_name : 'You:';
+            document.querySelector('#reply_text').innerText = e;
+            document.querySelector('#reply_user').innerText = a;
+        })
+        document.getElementById(`copy-message-${message.id}`).addEventListener('click', () => {
         let e = document.getElementById(`${message.id}`).innerText;
         navigator.clipboard.writeText(e)
         document.getElementById("chat-input").focus();
@@ -459,6 +467,7 @@ function chatArrange(message, user2) {
             document.getElementById('copyClipBoard').style.display = 'none'
         }, 1e3)
     })
+    }
     p()
 }
 

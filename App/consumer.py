@@ -31,22 +31,15 @@ class CloudinaryUpload(threading.Thread):
                 images.append(new_img.secure_url)
                 image = await sync_to_async(Album.objects.create)(images=new_img.secure_url)
                 await sync_to_async(self.msg.images.add)(image)
-            except:
+            except cloudinary.exceptions.Error as e:
                 image = await sync_to_async(Album.objects.create)(images='/assets/images/small/img-1.jpg')
                 await sync_to_async(self.msg.images.add)(image)
-
+                images.append(image.images)
+                print(e)
         return images
 
 
 class AppChatConsumer(AsyncJsonWebsocketConsumer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.newmsg = None
-        self.room_name = None
-        self.me = None
-        self.reply = None
-        self.user2 = None
-        self.chat_room = None
 
     async def connect(self):
         """ Handles connection with websocket """
@@ -64,43 +57,45 @@ class AppChatConsumer(AsyncJsonWebsocketConsumer):
             'type' function for execution
         """
         command = content.get('command')
-        message = content.get('msg', None)
+        message = content.get('msg', '')
 
         if command == 'typing':
             await self.channel_layer.group_send(self.room_name, {
                 'type': 'websocket_typing',  # Create a function with the name of the value in your type key
                 'user': self.scope['user']
             })
-        if content.get('reply_id') is not None:
-            # if this message is replying to a previous chat, assign reply to message in database
-            self.reply = await sync_to_async(PrivateMessage.objects.get)(id=content.get('reply_id'))
-
-            self.newmsg = await sync_to_async(PrivateMessage.objects.create)(room=self.chat_room, reply=self.reply,
-                                                                             sender=self.me,
-                                                                             msg=message)
-            self.reply_from = await sync_to_async(User.objects.get)(username=content.get('reply_user'))
-        else:
-            self.newmsg = await sync_to_async(PrivateMessage.objects.create)(room=self.chat_room, sender=self.me,
-                                                                             msg=message)
-        data = {
-            'type': 'websocket_private_chat',
-            'text': self.newmsg.msg,
-            'id': self.newmsg.id,
-            "username": self.newmsg.sender.username,
-            'first_name': self.newmsg.sender.first_name,
-            "command": 'private_chat',
-            "created_at": self.newmsg.created_at.strftime("%H:%M"),
-            'images': [],
-            'files': []
-        }
-        if content.get('reply_id') is not None:
-            data['reply'] = self.reply
-            data['reply_from'] = self.reply_from
 
         if command == 'private_chat':
+            if content.get('reply_id') is not None:
+                # if this message is replying to a previous chat, assign reply to message in database
+                reply = await sync_to_async(PrivateMessage.objects.get)(id=content.get('reply_id'))
+                new_msg = await sync_to_async(PrivateMessage.objects.create)(room=self.chat_room, reply=reply,
+                                                                             sender=self.me, msg=message)
+                reply_from = await sync_to_async(User.objects.get)(username=content.get('reply_user'))
+            else:
+                new_msg = await sync_to_async(PrivateMessage.objects.create)(room=self.chat_room, sender=self.me,
+                                                                             msg=message)
+                reply = None
+                reply_from = None
+            data = {
+                'type': 'websocket_private_chat',
+                'text': new_msg.msg,
+                'id': new_msg.id,
+                "username": new_msg.sender.username,
+                'first_name': new_msg.sender.first_name,
+                "command": 'private_chat',
+                "created_at": new_msg.created_at.strftime("%H:%M"),
+                'images': [],
+                'files': [],
+                'dropdown': True
+            }
+            if content.get('reply_id') is not None:
+                data['reply'] = reply
+                data['reply_from'] = reply_from
             if content['images']:
-                images = await CloudinaryUpload(content['images'], self.newmsg).start()
+                images = await CloudinaryUpload(content['images'], new_msg).start()
                 data['images'] = images
+                data['dropdown'] = False
             await self.channel_layer.group_send(self.room_name, data)
 
     async def websocket_typing(self, event):
@@ -126,7 +121,7 @@ class AppChatConsumer(AsyncJsonWebsocketConsumer):
             'command': event["command"],
             'images': event['images'],
             'files': event['files'],
-            'dropdown': True,
+            'dropdown': event['dropdown'],
             "created_at": event["created_at"],
             'reply': None
         }
