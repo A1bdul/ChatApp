@@ -287,7 +287,7 @@ function connectSocket(type, chatId, user2) {
             for (const i in data) {
                 if (data.hasOwnProperty(i)) {
                     let message = data[i]
-                    chatArrange(message, user2)
+                    chatArrange(message, user2, type)
                 }
             }
         });
@@ -302,9 +302,8 @@ function connectSocket(type, chatId, user2) {
                 document.getElementById('activity').innerText = ''
             }, 3000)
         }
-        if (message.command === 'private_chat') {
-            console.log(message)
-            chatArrange(message, user2)
+        if (message.command) {
+            chatArrange(message, user2, type)
         }
     }
     l.addEventListener('submit', (e) => {
@@ -331,7 +330,6 @@ function connectSocket(type, chatId, user2) {
         document.querySelector(".image_pre") &&
         document.querySelector(".image_pre").remove(),
             (document.getElementById("galleryfile-input").value = ""),
-            console.log(document.getElementById('galleryfile-input').value)
         document.querySelector(".attchedfile_pre") &&
         document.querySelector(".attchedfile_pre").remove(),
             (document.getElementById("attachedfile-input").value = ""),
@@ -351,8 +349,7 @@ function connectSocket(type, chatId, user2) {
     })
 }
 
-function chatArrange(message, user2) {
-    console.log(message)
+function chatArrange(message, user2, type) {
     function p() {
         let t = document
                 .querySelector('.remove')
@@ -416,7 +413,7 @@ function chatArrange(message, user2) {
 
     let a, i, s;
     a = message.sender.username === user2 ? ' right' : ' left';
-    s = message.reply ? message.reply : null;
+    s = type ===  'group' && message.sender.username !== user2? `<span>${message.sender.first_name}</span>` : '';
     (i =
         '<li class="chat-list' +
         a +
@@ -436,11 +433,12 @@ function chatArrange(message, user2) {
             message.reply
         ) ),
         (i +=
-            '<div class="conversation-name"><small class="text-muted time">' +
+            '<div class="conversation-name">'+s+'<small class="text-muted time">' +
             message.created_at +
             '</small> <span class="text-success check-message-icon"><i class="bx bx-check-double"></i></span></div>'),
         (i += "</div>                </div>            </li>");
-    document.querySelector('.chat-conversation-list').insertAdjacentHTML('beforeend', i);
+        document.querySelector('.chat-conversation-list').insertAdjacentHTML('beforeend', i);
+
     if (!0 === message.dropdown) {
         document.getElementById(`reply-message-${message.id}`).addEventListener('click', (s) => {
             let i = document.querySelector("#reply"),
@@ -472,6 +470,7 @@ function chatArrange(message, user2) {
 }
 
 function conversatonSettings(type, data) {
+
     let a = type === 'group' ? `<div id="channel-chat" class="remove position-relative">
                         <div class="p-3 p-lg-4 user-chat-topbar">
                             <div class="row align-items-center">
@@ -487,7 +486,7 @@ function conversatonSettings(type, data) {
                                                 </div>
                                                 <div class="flex-grow-1 overflow-hidden">
                                                     <h6 class="text-truncate mb-0 font-size-18"><a href="#" class="user-profile-show text-reset">Design Phase 2</a></h6>
-                                                    <p class="text-truncate text-muted mb-0"><small>24 Members</small></p>
+                                                    <p class="text-truncate text-muted mb-0"><small>${data.memberscount} Members</small></p>
                                                 </div>
                                             </div>
                                         </div>

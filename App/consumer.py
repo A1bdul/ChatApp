@@ -156,8 +156,20 @@ class GroupChatConsumer(AsyncJsonWebsocketConsumer):
         command = content.get('command', None)
         message = content.get('msg')
         if command == 'group_chat':
-            group_msg = await sync_to_async(GroupMessages.objects.create)(room=self.group, msg=message, sender=self.me)
-            await self.channel_layer.group_send(self.group_room_name, {
+
+            if content.get('reply_id') is not None:
+                # if this message is replying to a previous chat in the group chat, assign reply to message in database
+                reply = await sync_to_async(GroupMessages.objects.get)(id=content.get('reply_id'))
+                group_msg = await sync_to_async(GroupMessages.objects.create)(room=self.group, reply=reply,
+                                                                             sender=self.me, msg=message)
+                reply_from = await sync_to_async(User.objects.get)(username=content.get('reply_user'))
+            else:
+                group_msg = await sync_to_async(GroupMessages.objects.create)(room=self.group, msg=message,
+                                                                              sender=self.me)
+
+                reply = None
+                reply_from = None
+            data =  {
                 'type': 'channel_chat',
                 'sender': {
                     'username': self.me.username,
@@ -167,11 +179,20 @@ class GroupChatConsumer(AsyncJsonWebsocketConsumer):
                 'id': group_msg.id,
                 "created_at": group_msg.created_at.strftime("%H:%M"),
                 'images': [],
-                'files': []
-            })
+                'files': [],
+                'dropdown':True
+            }
+            if content.get('reply_id') is not None:
+                data['reply'] = reply
+                data['reply_from'] = reply_from
+            if content['images']:
+                images = await CloudinaryUpload(content['images'], group_msg).start()
+                data['images'] = images
+                data['dropdown'] = False
+            await self.channel_layer.group_send(self.group_room_name,data)
 
     async def channel_chat(self, event):
-        await self.send_json({
+        message = {
             'command': event['type'],
             'sender': {
                 "username": event["sender"]['username'],
@@ -184,7 +205,18 @@ class GroupChatConsumer(AsyncJsonWebsocketConsumer):
             'msg': event['msg'],
             'images': event['images'],
             'files': event['files'],
-            'dropdown': True,
+            'dropdown': event['dropdown'],
             "created_at": event["created_at"],
             'reply': None
-        })
+        }
+
+        if event.get('reply') is not None:
+            message['reply'] = {
+                'id': event['reply'].id,
+                'msg': event['reply'].msg,
+                'sender': {
+                    'username': event['reply_from'].username,
+                    'first_name': event['reply_from'].first_name
+                }
+            }
+        await self.send_json(message)
