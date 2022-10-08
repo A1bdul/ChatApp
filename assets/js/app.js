@@ -1,70 +1,63 @@
+function getToken(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 !(function () {
+    let user,
+        mode = getToken('data-layout-mode');
+    document.getElementsByTagName("body")[0].setAttribute('data-layout-mode', mode)
+
     fetch('user-error', {
         method: 'GET'
     })
         .then(r => r.json())
         .then(data => {
-            for (const contacts in data) {
-                if (data.hasOwnProperty(contacts)) {
-                    let contact = data[contacts];
-                    let i = `<div class="mt-3">
-<div class="contact-list-title">
-                                    ${contacts}
-                                    </div>
-                                    <ul class="list-unstyled contact-list">`,
-                        e = `
-
-<div>
-                                                                    <div class="contact-list-title">
-                                                                        ${contacts}
-                                                                    </div>
-
-                                                                    <ul class="list-unstyled contact-list">`;
-                    for (const user in contact) {
-                        if (contact.hasOwnProperty(user)) {
-
-                            i += (`<li style="cursor:pointer;">
-                            <div>
-                                <h5 class="font-size-14 m-0" >${contact[user].first_name} ${contact[user].last_name}</h5>
-                            </div>
-                        </li>`)
-                            e += (
-                                `<li>
-                                                                            <div class="form-check">
-                                                                                <input type="checkbox" class="form-check-input" id="memberCheck1">
-                                                                                <label class="form-check-label" for="memberCheck1">${contact[user].first_name} ${contact[user].last_name}</label>
-                                                                            </div>
-                                                                        </li>`
-                            )
+            let i, l;
+            for (const cont in data){
+                if (data.hasOwnProperty(cont)){
+                    let i,
+                        e = data[cont],
+                        n = "/assets/images/users/user-dummy-img.jpg",
+                        s = '<div class="mt-3" >              <div class="contact-list-title">' + cont.charAt(0).toUpperCase() + '                </div>          <ul id="contact-sort-' +cont.charAt(0) + '" class="list-unstyled contact-list" >';
+                    for (const contacts in e){
+                        if (e.hasOwnProperty(contacts)){
+                            let contact = e[contacts],
+                                a = contact.profile.avatar
+                    ? '<img src="' +
+                    contact.profile.avatar +
+                    '" class="rounded-circle avatar-xs" alt=""><span class="user-status"></span>'
+                    : '<div class="avatar-xs"><span class="avatar-title rounded-circle bg-primary text-white"><span class="username">' + contact["first_name"][0] + "" + contact["last_name"][0] + '</span><span class="user-status"></span></span></div>';
+                            i = '<li id="'+contacts+'" data-type="'+cont+'"><div class="d-flex align-items-center">                  <div class="flex-shrink-0 me-2">                      <div class="avatar-xs">                          ' + a + '                      </div>                  </div>                  <div class="flex-grow-1">                      <p class=" mb-0" style="font-weight: 500">' + contact.first_name +' '+contact.last_name+ '</p>                  </div>                  <div class="flex-shrink-0">                      <div class="dropdown">                          <a href="#" class="text-muted dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">                              <i class="bx bx-dots-vertical-rounded align-middle"></i>                          </a>                          <div class="dropdown-menu dropdown-menu-end">                              <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Edit <i class="bx bx-pencil ms-2 text-muted"></i></a>                              <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Block <i class="bx bx-block ms-2 text-muted"></i></a>                              <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Remove <i class="bx bx-trash ms-2 text-muted"></i></a></div></div></div></div></li>';
                         }
                     }
-                    i += (` </ul>
-                                </div>`)
-                    e += (`</ul></div>`);
-
-                    document.getElementById('contactList').innerHTML += i;
-                    document.getElementById('group-members').innerHTML += e
+                    l !== cont.charAt(0) && (document.getElementsByClassName("sort-contact")[0].innerHTML += s), document.getElementById("contact-sort-" + cont.charAt(0)).innerHTML = document.getElementById("contact-sort-" + cont.charAt(0)).innerHTML + i, l = cont.charAt(0)
+                       document.querySelectorAll(".sort-contact ul li").forEach(function (s) {
+                s.addEventListener("click", function (k) {
+                    conversatonSettings('users', e)
+                    let contact = data[s.getAttribute('data-type')][s.id]
+                    var t = contact.first_name;
+                    document.querySelector(".text-truncate .user-profile-show").innerHTML = t, document.querySelector(".user-profile-desc .text-truncate").innerHTML = t, document.querySelector(".audiocallModal .text-truncate").innerHTML = t, document.querySelector(".videocallModal .text-truncate").innerHTML = t, document.querySelector(".user-profile-sidebar .user-name").innerHTML = t;
+                    var a = s.querySelector("li .align-items-center").querySelector(".avatar-xs .rounded-circle").getAttribute("src");
+                    a ? (document.querySelector(".user-own-img .avatar-sm").setAttribute("src", a), document.querySelector(".user-profile-sidebar .profile-img").setAttribute("src", a), document.querySelector(".audiocallModal .img-thumbnail").setAttribute("src", a), document.querySelector(".videocallModal .videocallModal-bg").setAttribute("src", a)) : (document.querySelector(".user-own-img .avatar-sm").setAttribute("src", n), document.querySelector(".user-profile-sidebar .profile-img").setAttribute("src", n), document.querySelector(".audiocallModal .img-thumbnail").setAttribute("src", n), document.querySelector(".videocallModal .videocallModal-bg").setAttribute("src", n)), document.getElementById("users-conversation").querySelectorAll(".left .chat-avatar").forEach(function (e) {
+                        a ? e.querySelector("img").setAttribute("src", a) : e.querySelector("img").setAttribute("src", n)
+                    }), window.stop();
+                    connectSocket('users', contact.username, user.username)
+                })
+            }), Ai()
                 }
             }
-
-            document
-                .querySelectorAll(".contact-modal-list .contact-list li")
-                .forEach(function (e) {
-                    e.addEventListener("click", function () {
-                        e.classList.toggle("selected");
-                    });
-                }),
-                document.body.addEventListener("click", function () {
-                    new bootstrap.Collapse(i, {toggle: !1}).hide();
-                }),
-            i &&
-            document
-                .querySelectorAll(".contact-modal-list .contact-list li")
-                .forEach(function (e) {
-                    e.addEventListener("click", function () {
-                        e.classList.toggle("selected");
-                    });
-                })
         })
 
     fetch('/user-api', {
@@ -72,6 +65,7 @@
     })
         .then(res => res.json())
         .then(main => {
+            user = main
             document.querySelectorAll('.user-name').forEach(link => link.innerHTML = main.first_name + ' ' + main.last_name)
             document.querySelectorAll('.user-email').forEach(link => link.innerHTML = main.email)
             let avatar = main.profile.avatar ? main.profile.avatar : '/assets/images/users/user-dummy-img.jpg'
@@ -160,7 +154,7 @@
                                     type = e.getAttribute('data-name'),
                                     rooms = room[type];
                                 conversatonSettings('users', rooms[user])
-                                const is_user = (main.username !== rooms[user]['user1'].username) ? rooms[user]['user1'] : rooms[user]['user2'];
+                                 is_user = (main.username !== rooms[user]['user1'].username) ? rooms[user]['user1'] : rooms[user]['user2'];
                                 let a = is_user["first_name"],
                                     n = is_user['avatar'] ? is_user['avatar'] : '/assets/images/users/user-dummy-img.jpg';
 
@@ -230,6 +224,51 @@
                 )
         });
 
+    var B = document.querySelector("#channel-conversation");
+    document.querySelector("#profile-foreground-img-file-input").addEventListener("change", function () {
+        var e = document.querySelector(".profile-foreground-img"),
+            t = document.querySelector(".profile-foreground-img-file-input").files[0], a = new FileReader;
+        a.addEventListener("load", function () {
+            e.src = a.result
+        }, !1), t && a.readAsDataURL(t)
+    }), document.querySelector("#profile-img-file-input").addEventListener("change", function (q) {
+        let e = document.querySelectorAll(".rounded-circle"),
+            t = document.getElementById("profile-img-file-input").files[0],
+            a = new FileReader,
+            formData = new FormData();
+        formData.append('avatar',t )
+        a.addEventListener("load", function () {
+            e.forEach(image => image.src = a.result);
+            fetch('/user-api', {
+                            method: 'POST', headers: {
+                                'X-CSRFToken': getToken("csrftoken"),
+                                'X-Requested-With':'XMLHttpRequest',
+                                "Accept": 'application/json'
+                            },
+            body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                console.log(data)
+            });
+            }, !1), t && a.readAsDataURL(t), f
+
+    });
+    for (var j = document.getElementsByClassName("favourite-btn"), T = 0; T < j.length; T++) {
+        var I = j[T];
+        I.onclick = function () {
+            I.classList.toggle("active")
+        }
+    }
+    new FgEmojiPicker({
+        trigger: [".emoji-btn"],
+        removeOnSelection: !1,
+        closeButton: !0,
+        position: ["top", "right"],
+        preFetch: !0,
+        dir: "assets/js/dir/json",
+        insertInto: document.querySelector(".chat-input")
+    });
 
     document.getElementById("emoji-btn").addEventListener("click", function () {
         setTimeout(function () {
@@ -307,6 +346,7 @@ function connectSocket(type, chatId, user2) {
         }
     }
     l.addEventListener('submit', (e) => {
+        console.log('SUb')
         e.preventDefault();
         let value = g.value,
             o = document.querySelector(".image_pre"),
@@ -325,6 +365,7 @@ function connectSocket(type, chatId, user2) {
                 reply_user: reply_user
             }
             send_message['command'] = type !== 'group'? 'private_chat':'group_chat';
+
         socket.send(JSON.stringify(send_message));
         (g.value = ""),
         document.querySelector(".image_pre") &&
@@ -420,7 +461,7 @@ function chatArrange(message, user2, type) {
         '" id=" chat-' +
         message.id +
         '">                        <div class="conversation-list">');
-    if (message.sender.username !== user2) {
+    if (type === 'group' && message.sender.username !== user2) {
         i += message.sender.profile.avatar ? `<div class="chat-avatar"><img src="${message.sender.profile.avatar}" alt=""></div>` : `<div class="chat-avatar"><img src="/assets/images/users/user-dummy-img.jpg" alt=""></div>`;
     }
     (i += '<div class="user-chat-content">'),
@@ -433,9 +474,7 @@ function chatArrange(message, user2, type) {
             message.reply
         ) ),
         (i +=
-            '<div class="conversation-name">'+s+'<small class="text-muted time">' +
-            message.created_at +
-            '</small> <span class="text-success check-message-icon"><i class="bx bx-check-double"></i></span></div>'),
+            '<div class="conversation-name"><small class="text-muted time">' + message.created_at+ '    '+s+'</small> <span class="text-success check-message-icon"><i class="bx bx-check-double"></i></span></div>'),
         (i += "</div>                </div>            </li>");
         document.querySelector('.chat-conversation-list').insertAdjacentHTML('beforeend', i);
 
@@ -551,6 +590,10 @@ function conversatonSettings(type, data) {
                             <ul class="list-unstyled chat-conversation-list" id="channel-conversation">       
                             </ul>
                         </div>
+                                             <div class="alert alert-warning alert-dismissible copyclipboard-alert px-4 fade show " style="display:none;" id="copyClipBoard" role="alert">
+                            message copied
+                        </div>
+
                         <!-- end chat conversation end -->
                         </div>` : `<div id="channel-chat" class="remove position-relative">
                     <div class="p-3 p-lg-4 user-chat-topbar">
@@ -702,3 +745,28 @@ function f() {
 function F() {
     GLightbox({selector: ".popup-img", title: !1});
 }
+
+function Ai() {
+        var a = document.getElementsByClassName("user-chat");
+        document.querySelectorAll(".chat-user-list li a").forEach(function (e) {
+            e.addEventListener("click", function (e) {
+                a.forEach(function (e) {
+                    e.classList.add("user-chat-show")
+                });
+                var t = document.querySelector(".chat-user-list li.active");
+                t && t.classList.remove("active"), this.parentNode.classList.add("active")
+            })
+        }), document.querySelectorAll(".sort-contact ul li").forEach(function (e) {
+            e.addEventListener("click", function (e) {
+                a.forEach(function (e) {
+                    e.classList.add("user-chat-show")
+                })
+            })
+        }), document.querySelectorAll(".user-chat-remove").forEach(function (e) {
+            e.addEventListener("click", function (e) {
+                a.forEach(function (e) {
+                    e.classList.remove("user-chat-show")
+                })
+            })
+        })
+    }

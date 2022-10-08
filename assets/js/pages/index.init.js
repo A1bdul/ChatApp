@@ -102,7 +102,7 @@ function themeColor(e) {
     var c = window.localStorage.getItem("color"),
         d = window.localStorage.getItem("image");
     document.querySelectorAll(".theme-img , .theme-color").forEach(function (r) {
-        r.id == c && (r.checked = !0), r.id == d && (r.checked = !0);
+        r.id === c && (r.checked = !0), r.id === d && (r.checked = !0);
         var e,
             t,
             a,
@@ -319,29 +319,25 @@ function removeAudioFile() {
             });
 }
 
-themeColor(primaryColor);
-!(function () {
+!function () {
     "use strict";
     var e, t;
-    [].slice
-        .call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        .map(function (t) {
-            return new bootstrap.Tooltip(t);
-        }),
-        [].slice
-            .call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-            .map(function (t) {
-                return new bootstrap.Popover(t);
-            }),
-        (e = document.getElementsByTagName("body")[0]),
-    (t = document.querySelectorAll(".light-dark")) &&
-    t.forEach(function (t) {
+    [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (t) {
+        return new bootstrap.Tooltip(t)
+    }), [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]')).map(function (t) {
+        return new bootstrap.Popover(t)
+    }), e = document.getElementsByTagName("body")[0], (t = document.querySelectorAll(".light-dark")) && t.forEach(function (t) {
         t.addEventListener("click", function (t) {
-            e.hasAttribute("data-layout-mode") &&
-            "dark" == e.getAttribute("data-layout-mode")
-                ? document.body.setAttribute("data-layout-mode", "light")
-                : document.body.setAttribute("data-layout-mode", "dark");
-        });
-    })
-    Waves.init();
-})();
+            if(e.hasAttribute("data-layout-mode") && "dark" === e.getAttribute("data-layout-mode")) {
+                document.body.setAttribute("data-layout-mode", "light")
+                document.cookie = 'data-layout-mode=light'
+            }
+            else{
+                document.body.setAttribute("data-layout-mode", "dark")
+                document.cookie = 'data-layout-mode=dark'
+            }
+        })
+    }), Waves.init()
+}();
+
+themeColor(primaryColor);

@@ -15,8 +15,10 @@ from collections import namedtuple
 
 class HomeView(View):
     template_name = 'index.html'
+
     def get(self, request):
         return render(request, self.template_name)
+
 
 @api_view(['GET'])
 def api_room_view(request):
@@ -40,11 +42,13 @@ def api_all_rooms(request):
     user = request.user
     all_rooms = namedtuple('RoomType', ['favourite_users', 'usersList', 'channelList'])
     rooms = all_rooms(
-        favourite_users=user.profile.favourite.all(),
-        usersList=ChatRoom.objects.filter(Q(user1=user) | Q(user2=user)).exclude(Q(favourite__favourite__user1=user)|Q(favourite__favourite__user2=user)),
+        favourite_users=[x for x in user.profile.favourite.all() if PrivateMessage.objects.filter(room=x)],
+        usersList=[x for x in ChatRoom.objects.filter(Q(user1=user) | Q(user2=user))
+                   if x not in user.profile.favourite.all()],
         channelList=Group.objects.filter(members__participant=user)
     )
     instance = HomeFeedSerializers(rooms).data
+
     return Response(instance)
 
 

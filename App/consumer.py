@@ -5,8 +5,8 @@ import cloudinary
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from user.models import User
 from App.models import ChatRoom, PrivateMessage, Group, Album, GroupMessages
-from asgiref.sync import sync_to_async, async_to_sync
 import threading
+from channels.db import database_sync_to_async
 
 load_dotenv()
 
@@ -29,13 +29,12 @@ class CloudinaryUpload(threading.Thread):
             try:
                 new_img = cloudinary.uploader.upload(img)
                 images.append(new_img['secure_url'])
-                image = await sync_to_async(Album.objects.create)(images=new_img['secure_url'])
-                await sync_to_async(self.msg.images.add)(image)
+                image = await database_sync_to_async(Album.objects.create)(images=new_img['secure_url'])
+                await database_sync_to_async(self.msg.images.add)(image)
             except cloudinary.exceptions.Error as e:
-                image = await sync_to_async(Album.objects.create)(images='/assets/images/small/img-1.jpg')
-                await sync_to_async(self.msg.images.add)(image)
+                image = await database_sync_to_async(Album.objects.create)(images='/assets/images/small/img-1.jpg')
+                await database_sync_to_async(self.msg.images.add)(image)
                 images.append(image.images)
-                print(e)
         return images
 
 
@@ -44,13 +43,13 @@ class AppChatConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         """ Handles connection with websocket """
         # checks if both users are authenticated then gets or create their chatroom
-        self.me = await sync_to_async(User.objects.get)(username=self.scope['user'])
-        self.user2 = await sync_to_async(User.objects.get)(username=self.scope['url_route']['kwargs']['username'])
+        self.me = await database_sync_to_async(User.objects.get)(username=self.scope['user'])
+        self.user2 = await database_sync_to_async(User.objects.get)(username=self.scope['url_route']['kwargs']['username'])
         await self.accept()
-        self.chat_room = await sync_to_async(ChatRoom.get_room.get_or_create_room)(self.me, self.user2)
+        self.chat_room = await database_sync_to_async(ChatRoom.get_room.get_or_create_room)(self.me, self.user2)
         self.room_name = f'private_room_{self.chat_room.id}'
         await self.channel_layer.group_add(self.room_name, self.channel_name)
-        await sync_to_async(PrivateMessage.manage.read_all_message)(room=self.chat_room, user=self.me)
+        await database_sync_to_async(PrivateMessage.manage.read_all_message)(room=self.chat_room, user=self.me)
 
     async def receive_json(self, content, **kwargs):
         """ Handles all incoming message from websocket, each command is assigned to it own
@@ -65,15 +64,15 @@ class AppChatConsumer(AsyncJsonWebsocketConsumer):
                 'user': self.scope['user']
             })
 
-        if command == 'private_chat':
+        if command == 'private_chat' and (content.get('images') or content.get('msg') or content.get('files')):
             if content.get('reply_id') is not None:
                 # if this message is replying to a previous chat, assign reply to message in database
-                reply = await sync_to_async(PrivateMessage.objects.get)(id=content.get('reply_id'))
-                new_msg = await sync_to_async(PrivateMessage.objects.create)(room=self.chat_room, reply=reply,
+                reply = await database_sync_to_async(PrivateMessage.objects.get)(id=content.get('reply_id'))
+                new_msg = await database_sync_to_async(PrivateMessage.objects.create)(room=self.chat_room, reply=reply,
                                                                              sender=self.me, msg=message)
-                reply_from = await sync_to_async(User.objects.get)(username=content.get('reply_user'))
+                reply_from = await database_sync_to_async(User.objects.get)(username=content.get('reply_user'))
             else:
-                new_msg = await sync_to_async(PrivateMessage.objects.create)(room=self.chat_room, sender=self.me,
+                new_msg = await database_sync_to_async(PrivateMessage.objects.create)(room=self.chat_room, sender=self.me,
                                                                              msg=message)
                 reply = None
                 reply_from = None
@@ -148,23 +147,23 @@ class GroupChatConsumer(AsyncJsonWebsocketConsumer):
         await self.accept()
         self.me = self.scope['user']
         self.group_id = self.scope['url_route']['kwargs']['group_id']
-        self.group = await sync_to_async(Group.objects.get)(id=self.group_id)
+        self.group = await database_sync_to_async(Group.objects.get)(id=self.group_id)
         self.group_room_name = f'{str(self.group.name).replace(" ", "")}-{str(self.group.id)}'
         await self.channel_layer.group_add(self.group_room_name, self.channel_name)
 
     async def receive_json(self, content, **kwargs):
         command = content.get('command', None)
         message = content.get('msg')
-        if command == 'group_chat':
 
+        if command == 'group_chat' and (content.get('images') or content.get('msg') or content.get('files')):
             if content.get('reply_id') is not None:
                 # if this message is replying to a previous chat in the group chat, assign reply to message in database
-                reply = await sync_to_async(GroupMessages.objects.get)(id=content.get('reply_id'))
-                group_msg = await sync_to_async(GroupMessages.objects.create)(room=self.group, reply=reply,
+                reply = await database_sync_to_async(GroupMessages.objects.get)(id=content.get('reply_id'))
+                group_msg = await database_sync_to_async(GroupMessages.objects.create)(room=self.group, reply=reply,
                                                                              sender=self.me, msg=message)
-                reply_from = await sync_to_async(User.objects.get)(username=content.get('reply_user'))
+                reply_from = await database_sync_to_async(User.objects.get)(username=content.get('reply_user'))
             else:
-                group_msg = await sync_to_async(GroupMessages.objects.create)(room=self.group, msg=message,
+                group_msg = await database_sync_to_async(GroupMessages.objects.create)(room=self.group, msg=message,
                                                                               sender=self.me)
 
                 reply = None

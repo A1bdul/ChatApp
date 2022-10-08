@@ -40,8 +40,8 @@ class UserManager(BaseUserManager):
 class User(AbstractUser):
     first_name = models.CharField(max_length=200, blank=True, null=True)
     last_name = models.CharField(max_length=200, blank=True, null=True)
-    username = models.CharField(max_length=200, unique=True)
-    email = models.CharField(max_length=200, unique=True)
+    username = models.CharField(max_length=200, unique=True, blank=True, null=True)
+    email = models.CharField(max_length=200, unique=True, blank=True, null=True)
     password = models.CharField(max_length=200)
 
     contacts = models.ManyToManyField('self', symmetrical=False, related_name='contact', blank=True)
@@ -85,6 +85,10 @@ class ChatRoom(models.Model):
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     bio = models.TextField(blank=True, default="")
+
     avatar = models.ImageField(blank=True, null=True, upload_to='avatars')
     cover_image = models.ImageField(blank=True, null=True, upload_to='cover_image')
     favourite = models.ManyToManyField(ChatRoom, blank=True, related_name='favourite')
+
+    def __str__(self):
+        return self.user.username
