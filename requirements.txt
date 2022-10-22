@@ -1,8 +1,11 @@
 channels==3.0.5
-cloudinary==1.29.0
-Django==4.1
+cloudinary~=1.28.0
+Django~=4.1.2
 djangorestframework==3.13.1
 Pillow==9.2.0
 pyasn1==0.4.8
 asgiref~=3.5.2
-python-dotenv~=0.21.0
+python-dotenv~=0.19.2
+djangorestframework-simplejwt
+sqlparse~=0.4.2
+djoser~=2.1.0

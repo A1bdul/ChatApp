@@ -43,13 +43,15 @@ class AppChatConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         """ Handles connection with websocket """
         # checks if both users are authenticated then gets or create their chatroom
-        self.me = await database_sync_to_async(User.objects.get)(username=self.scope['user'])
+        self.me = self.scope['user']
+        print(self.me)
         self.user2 = await database_sync_to_async(User.objects.get)(username=self.scope['url_route']['kwargs']['username'])
-        await self.accept()
-        self.chat_room = await database_sync_to_async(ChatRoom.get_room.get_or_create_room)(self.me, self.user2)
-        self.room_name = f'private_room_{self.chat_room.id}'
-        await self.channel_layer.group_add(self.room_name, self.channel_name)
-        await database_sync_to_async(PrivateMessage.manage.read_all_message)(room=self.chat_room, user=self.me)
+        if self.user2 != self.me:
+            await self.accept()
+            self.chat_room = await database_sync_to_async(ChatRoom.get_room.get_or_create_room)(self.me, self.user2)
+            self.room_name = f'private_room_{self.chat_room.id}'
+            await self.channel_layer.group_add(self.room_name, self.channel_name)
+            await database_sync_to_async(PrivateMessage.manage.read_all_message)(room=self.chat_room, user=self.me)
 
     async def receive_json(self, content, **kwargs):
         """ Handles all incoming message from websocket, each command is assigned to it own
@@ -57,6 +59,7 @@ class AppChatConsumer(AsyncJsonWebsocketConsumer):
         """
         command = content.get('command')
         message = content.get('msg', '')
+        print(content)
 
         if command == 'typing':
             await self.channel_layer.group_send(self.room_name, {

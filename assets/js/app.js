@@ -14,13 +14,38 @@ function getToken(name) {
     return cookieValue;
 }
 
-!(function () {
+!(function (){
+    document.getElementById('login-form') &&document.getElementById('login-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        let email = document.getElementById('email').value,
+            password = document.getElementById('password-input').value;
+        fetch('/auth/jwt/create', {
+            method: 'POST',
+            headers: {
+                "Accept": "application/json",
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                'email': email,
+                'password': password
+            })
+        })
+            .then(r => r.json())
+            .then(data => {
+                window.localStorage.setItem('token', data['access'])
+                window.location.replace('/')
+            })
+            .catch(err => {})
+    })
+
     let user,
+        token = `Bearer ${window.localStorage.getItem('token')}`
         mode = getToken('data-layout-mode');
     document.getElementsByTagName("body")[0].setAttribute('data-layout-mode', mode)
-
     fetch('user-error', {
-        method: 'GET'
+        method: 'GET', headers:{
+            'Authorization': token
+        }
     })
         .then(r => r.json())
         .then(data => {
@@ -59,20 +84,28 @@ function getToken(name) {
                 }
             }
         })
-
+        .catch(err => {
+            console.log(err)
+        })
     fetch('/user-api', {
-        method: 'GET',
+        method: 'GET', headers:{
+            'Authorization': token
+        }
     })
         .then(res => res.json())
         .then(main => {
+            console.log(main)
             user = main
             document.querySelectorAll('.user-name').forEach(link => link.innerHTML = main.first_name + ' ' + main.last_name)
             document.querySelectorAll('.user-email').forEach(link => link.innerHTML = main.email)
-            let avatar = main.profile.avatar ? main.profile.avatar : '/assets/images/users/user-dummy-img.jpg'
+            let avatar = main.profile.avatar ? `${main.profile.avatar}` : '/assets/images/users/user-dummy-img.jpg'
+            console.log(avatar)
             document.querySelectorAll('.user-image').forEach(link => link.src = avatar)
             document.querySelectorAll('.user-about').forEach(link => link.innerHTML = main.profile.bio)
             fetch('/api/all-room', {
-                method: 'GET'
+                method: 'GET', headers:{
+                    'Authorization': token
+                }
             })
                 .then(r => r.json())
                 .then(room => {
@@ -176,11 +209,10 @@ function getToken(name) {
                                         ".videocallModal .text-truncate"
                                     ).innerHTML = a);
                                 (document.querySelectorAll('.user2-email').forEach(link => link.innerHTML = is_user.email))
-                                let s = is_user["avatar"];
+                                let s = is_user.profile["avatar"];
                                 s
                                     ? (document
-                                        .querySelector(".user-own-img .profile.avatar-sm")
-                                        .querySelector(".user-own-img .avatar-sm")
+                                        .querySelector(".avatar-sm")
                                         .setAttribute("src", s),
                                         document
                                             .querySelector(".user-profile-sidebar .profile-img")
@@ -225,7 +257,7 @@ function getToken(name) {
         });
 
     var B = document.querySelector("#channel-conversation");
-    document.querySelector("#profile-foreground-img-file-input").addEventListener("change", function () {
+    document.querySelector("#profile-foreground-img-file-input") && document.querySelector("#profile-foreground-img-file-input").addEventListener("change", function () {
         var e = document.querySelector(".profile-foreground-img"),
             t = document.querySelector(".profile-foreground-img-file-input").files[0], a = new FileReader;
         a.addEventListener("load", function () {
@@ -234,7 +266,7 @@ function getToken(name) {
     }), document.querySelector("#profile-img-file-input").addEventListener("change", function (q) {
         let e = document.querySelectorAll(".rounded-circle"),
             t = document.getElementById("profile-img-file-input").files[0],
-            a = new FileReader,
+            a = new FileReader;
             formData = new FormData();
         formData.append('avatar',t )
         a.addEventListener("load", function () {
@@ -243,7 +275,8 @@ function getToken(name) {
                             method: 'POST', headers: {
                                 'X-CSRFToken': getToken("csrftoken"),
                                 'X-Requested-With':'XMLHttpRequest',
-                                "Accept": 'application/json'
+                                "Accept": 'application/json',
+                                'Authorization' : token
                             },
             body: formData
             })
@@ -287,16 +320,16 @@ function chatList(type, rooms, main) {
     for (const user in rooms) {
         if (rooms.hasOwnProperty(user)) {
             const is_user = (main.username !== rooms[user]['user1'].username) ? rooms[user]['user1'] : rooms[user]['user2'];
-            const a = is_user["avatar"]
+            const a = is_user.profile["avatar"]
                     ? '<img src="' +
-                    is_user["avatar"] +
+                    is_user.profile["avatar"] +
                     '" class="rounded-circle avatar-xs" alt=""><span class="user-status"></span>'
                     : '<div class="avatar-xs"><span class="avatar-title rounded-circle bg-primary text-white"><span class="username">' + is_user["first_name"][0] + "" + is_user["last_name"][0] + '</span><span class="user-status"></span></span></div>',
                 s = rooms[user]['unread'] ?
                     '<div class="ms-auto"><span class="badge badge-soft-dark rounded p-1">' + rooms[user]["unread"] + '</span></div>' : '',
                 i = '<a href="javascript: void(0);" class="unread-msg-user">',
                 l = 2 === rooms[user]['id'] ? "active" : "";
-            document.getElementById(`${type}`).insertAdjacentHTML('afterbegin', '<li class="users-chatlist chatlist' + rooms[user]['id'] + '" id=' +
+            document.getElementById(`${type}`) && document.getElementById(`${type}`).insertAdjacentHTML('afterbegin', '<li class="users-chatlist chatlist' + rooms[user]['id'] + '" id=' +
                 user +
                 ' data-name='+type+'>                  ' +
                 i +
@@ -315,11 +348,13 @@ function chatList(type, rooms, main) {
 }
 
 function connectSocket(type, chatId, user2) {
-    let url = type === 'group' ? `ws://${window.location.host}/ws/group/${chatId}` : `ws://${window.location.host}/ws/${chatId}`,
+    let url = type === 'group' ? `ws://${window.location.host}/ws/group/${chatId}?token=${localStorage.getItem('token')}` : `ws://${window.location.host}/ws/${chatId}?token=${localStorage.getItem('token')}`,
         message_url = type === 'group' ? 'api/group-message/' + chatId : `api/room-messages/${chatId}`,
         socket = new WebSocket(url);
     fetch(message_url, {
-        method: 'GET'
+        method: 'GET', headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
     })
         .then(res => res.json())
         .then(data => {
@@ -345,9 +380,10 @@ function connectSocket(type, chatId, user2) {
             chatArrange(message, user2, type)
         }
     }
-    l.addEventListener('submit', (e) => {
-        console.log('SUb')
-        e.preventDefault();
+    let pressed = false
+    !pressed && l.addEventListener('submit', (e) => {
+        e.preventDefault() && e.stopPropagation();
+        pressed = true
         let value = g.value,
             o = document.querySelector(".image_pre"),
             r = document.querySelector(".attchedfile_pre"),
@@ -381,9 +417,10 @@ function connectSocket(type, chatId, user2) {
             document.querySelector('.file_Upload').classList.remove('show')
 
     })
+    pressed = false
     document.getElementById("chat-input").focus();
 
-    g.addEventListener('keypress', () => {
+    g && g.addEventListener('keypress', () => {
         socket.send(JSON.stringify({
             command: 'typing'
         }))
@@ -476,17 +513,17 @@ function chatArrange(message, user2, type) {
         (i +=
             '<div class="conversation-name"><small class="text-muted time">' + message.created_at+ '    '+s+'</small> <span class="text-success check-message-icon"><i class="bx bx-check-double"></i></span></div>'),
         (i += "</div>                </div>            </li>");
-        document.querySelector('.chat-conversation-list').insertAdjacentHTML('beforeend', i);
+        !document.getElementById(`chat-${message.id}`) && (document.querySelector('.chat-conversation-list').innerHTML += i);
 
     if (!0 === message.dropdown) {
-        document.getElementById(`reply-message-${message.id}`).addEventListener('click', (s) => {
+        document.getElementById(`reply-message-${message.id}`) && document.getElementById(`reply-message-${message.id}`).addEventListener('click', (s) => {
             let i = document.querySelector("#reply"),
                 o = document.querySelector("#close_toggle");
 
             i.classList.add("show")
             i.setAttribute('dataid', `${message.id}`)
             i.setAttribute('data-user', `${message.sender.username}`)
-            o.addEventListener("click", function () {
+            o && o.addEventListener("click", function () {
                 i.classList.remove("show");
             });
             document.getElementById("chat-input").focus();
@@ -495,7 +532,7 @@ function chatArrange(message, user2, type) {
             document.querySelector('#reply_text').innerText = e;
             document.querySelector('#reply_user').innerText = a;
         })
-        document.getElementById(`copy-message-${message.id}`).addEventListener('click', () => {
+        document.getElementById(`copy-message-${message.id}`) && document.getElementById(`copy-message-${message.id}`).addEventListener('click', () => {
         let e = document.getElementById(`${message.id}`).innerText;
         navigator.clipboard.writeText(e)
         document.getElementById("chat-input").focus();
@@ -707,7 +744,7 @@ function f() {
     document
         .querySelectorAll(".chat-user-list li a")
         .forEach(function (e) {
-            e.addEventListener("click", function (e) {
+            e && e.addEventListener("click", function (e) {
                 f.forEach(function (e) {
                     e.classList.add("user-chat-show");
                 });
@@ -720,7 +757,7 @@ function f() {
         document
             .querySelectorAll(".sort-contact ul li")
             .forEach(function (e) {
-                e.addEventListener("click", function (e) {
+                e && e.addEventListener("click", function (e) {
                     f.forEach(function (e) {
                         e.classList.add("user-chat-show");
                     });

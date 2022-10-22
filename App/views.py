@@ -2,12 +2,13 @@ from django.db.models import Q
 from django.shortcuts import render
 from django.views import View
 
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
-
+from rest_framework import authentication, permissions
 from App.models import ChatRoom, PrivateMessage, Group, GroupMessages
 from App.serializers import ChatRoomSerializers, RoomMessageSerializers, HomeFeedSerializers, GroupMessageSerializer
-
+from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 from user.models import User
 
 from collections import namedtuple
@@ -20,7 +21,7 @@ class HomeView(View):
         return render(request, self.template_name)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 def api_room_view(request):
     user = request.user
     rooms = ChatRoom.objects.filter(Q(user1=user) | Q(user2=user))
@@ -28,13 +29,14 @@ def api_room_view(request):
     return Response(instance)
 
 
-@api_view(['GET'])
-def api_room_messages(request, username):
-    user2 = User.objects.get(username=username)
-    room = ChatRoom.objects.filter(Q(user1=request.user, user2=user2) | Q(user2=request.user, user1=user2)).first()
-    messages = PrivateMessage.manage.get_queryset(room=room)[:50]
-    instance = RoomMessageSerializers(messages, many=True)
-    return Response(instance.data)
+class RoomMessages(APIView):
+    def get(self, request, *args, **kwargs):
+        user2 = User.objects.get(username=kwargs['username'])
+        print(user2)
+        room = ChatRoom.objects.filter(Q(user1=request.user, user2=user2) | Q(user2=request.user, user1=user2)).first()
+        messages = PrivateMessage.manage.get_queryset(room=room)[:50]
+        instance = RoomMessageSerializers(messages, many=True)
+        return Response(instance.data)
 
 
 @api_view(['GET'])
