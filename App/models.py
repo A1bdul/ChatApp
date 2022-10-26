@@ -24,6 +24,29 @@ class MessageManager(models.Manager):
             message.read.add(user)
             message.save()
 
+    def read_group_message(self, room, user):
+        messages = GroupMessages.objects.filter(room=room)
+        member = Member.objects.get(participant=user)
+        for message in messages:
+            message.read.add(member.participant)
+            message.save()
+
+    def get_unread(self, room, user):
+        x = PrivateMessage.objects.filter(room=room)
+        count = 0
+        for message in x:
+            if user not in message.read.all():
+                count += 1
+        return count
+
+    def get_group_unread(self, room, user):
+        x = GroupMessages.objects.filter(room=room)
+        count = 0
+        for message in x:
+            if user not in message.read.all():
+                count += 1
+        return count
+
 
 class Album(models.Model):
     """ upload images to the cloudinary storage and storing the url in database"""
@@ -45,7 +68,13 @@ class DefaultMessages(BaseModel):
     reply = models.ForeignKey('self', null=True, blank=True, related_name='replies', on_delete=models.SET_NULL)
     images = models.ManyToManyField(Album, blank=True, related_name='has_image')
     files = models.ManyToManyField(Folder, blank=True, related_name="has_files")
+    read = models.ManyToManyField(User, default=sender)
 
+    def save(
+        self, force_insert=False, force_update=False, using=None, update_fields=None
+    ):
+        super(DefaultMessages, self).save()
+        self.read.add(self.sender)
 
 class Member(models.Model):
     """ Model for the members in the group chat, the is_admin attribute handles
@@ -71,7 +100,6 @@ class GroupMessages(DefaultMessages):
         created a group chat
     """
     room = models.ForeignKey(Group, on_delete=models.CASCADE)
-    read_by = models.ManyToManyField(Member)
 
     objects = models.Manager()
     manage = MessageManager()
@@ -87,7 +115,6 @@ class PrivateMessage(DefaultMessages):
         created a private chat room
     """
     room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE)
-    read = models.ManyToManyField(User)
 
     objects = models.Manager()
     manage = MessageManager()

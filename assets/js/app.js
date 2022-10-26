@@ -14,30 +14,9 @@ function getToken(name) {
     return cookieValue;
 }
 
-!(function (){
-    document.getElementById('login-form') &&document.getElementById('login-form').addEventListener('submit', function (e) {
-        e.preventDefault();
-        let email = document.getElementById('email').value,
-            password = document.getElementById('password-input').value;
-        fetch('/auth/jwt/create', {
-            method: 'POST',
-            headers: {
-                "Accept": "application/json",
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                'email': email,
-                'password': password
-            })
-        })
-            .then(r => r.json())
-            .then(data => {
-                window.localStorage.setItem('token', data['access'])
-                window.location.replace('/')
-            })
-            .catch(err => {})
-    })
+let url, message_url, socket, is_user, current;
 
+!(function (){
     let user,
         token = `Bearer ${window.localStorage.getItem('token')}`
         mode = getToken('data-layout-mode');
@@ -71,6 +50,12 @@ function getToken(name) {
                        document.querySelectorAll(".sort-contact ul li").forEach(function (s) {
                 s.addEventListener("click", function (k) {
                     conversatonSettings('users', e)
+                    NProgress.start();
+	setTimeout(function() { NProgress.done(); $('.fade').removeClass('out'); }, 2000);
+
+                    if ( document.getElementById('channel-chat')) {
+                        current = is_user.username;
+                    }
                     let contact = data[s.getAttribute('data-type')][s.id]
                     var t = contact.first_name;
                     document.querySelector(".text-truncate .user-profile-show").innerHTML = t, document.querySelector(".user-profile-desc .text-truncate").innerHTML = t, document.querySelector(".audiocallModal .text-truncate").innerHTML = t, document.querySelector(".videocallModal .text-truncate").innerHTML = t, document.querySelector(".user-profile-sidebar .user-name").innerHTML = t;
@@ -85,7 +70,6 @@ function getToken(name) {
             }
         })
         .catch(err => {
-            console.log(err)
         })
     fetch('/user-api', {
         method: 'GET', headers:{
@@ -94,12 +78,10 @@ function getToken(name) {
     })
         .then(res => res.json())
         .then(main => {
-            console.log(main)
             user = main
             document.querySelectorAll('.user-name').forEach(link => link.innerHTML = main.first_name + ' ' + main.last_name)
             document.querySelectorAll('.user-email').forEach(link => link.innerHTML = main.email)
             let avatar = main.profile.avatar ? `${main.profile.avatar}` : '/assets/images/users/user-dummy-img.jpg'
-            console.log(avatar)
             document.querySelectorAll('.user-image').forEach(link => link.src = avatar)
             document.querySelectorAll('.user-about').forEach(link => link.innerHTML = main.profile.bio)
             fetch('/api/all-room', {
@@ -120,11 +102,11 @@ function getToken(name) {
                         for (const chat in group_chat) {
                             if (group_chat.hasOwnProperty(chat)) {
                                 let e = group_chat[chat]
-                                var a = e.messagecount
-                                        ? '<div class="flex-shrink-0 ms-2"><span class="badge badge-soft-dark rounded p-1">' +
-                                        e.messagecount +
+                                var a = e.messagecount[main.username]
+                                        ? '<div class="flex-shrink-0 ms-2"><span class="badge badge-soft-dark rounded p-1" id="unread-'+e.id+'">' +
+                                        e.messagecount[main.username] +
                                         "</span></div>"
-                                        : "",
+                                        : '<div class="flex-shrink-0 ms-2"><span class="badge badge-soft-dark rounded p-1" id="unread-'+e.id+'"></span></div>',
                                     s = e.messagecount
                                         ? '<a href="javascript: void(0);" class="unread-msg-user">'
                                         : '<a href="javascript: void(0);">';
@@ -187,7 +169,12 @@ function getToken(name) {
                                     type = e.getAttribute('data-name'),
                                     rooms = room[type];
                                 conversatonSettings('users', rooms[user])
-                                 is_user = (main.username !== rooms[user]['user1'].username) ? rooms[user]['user1'] : rooms[user]['user2'];
+
+
+                                is_user = (main.username !== rooms[user]['user1'].username) ? rooms[user]['user1'] : rooms[user]['user2'];
+                                if ( document.getElementById('channel-chat')) {
+                                    current =  is_user.username;
+                                }
                                 let a = is_user["first_name"],
                                     n = is_user['avatar'] ? is_user['avatar'] : '/assets/images/users/user-dummy-img.jpg';
 
@@ -243,6 +230,10 @@ function getToken(name) {
                             e.addEventListener('click', () => {
                                 const user = e.id;
                                 conversatonSettings('group', group_chat[user])
+
+                                if ( document.getElementById('channel-chat')) {
+                                    current = group_chat[user].id
+                                }
                                 let a = group_chat[user].name;
                                 (document
                                     .getElementById("channel-chat")
@@ -282,7 +273,6 @@ function getToken(name) {
             })
             .then(r => r.json())
             .then(data => {
-                console.log(data)
             });
             }, !1), t && a.readAsDataURL(t), f
 
@@ -325,8 +315,8 @@ function chatList(type, rooms, main) {
                     is_user.profile["avatar"] +
                     '" class="rounded-circle avatar-xs" alt=""><span class="user-status"></span>'
                     : '<div class="avatar-xs"><span class="avatar-title rounded-circle bg-primary text-white"><span class="username">' + is_user["first_name"][0] + "" + is_user["last_name"][0] + '</span><span class="user-status"></span></span></div>',
-                s = rooms[user]['unread'] ?
-                    '<div class="ms-auto"><span class="badge badge-soft-dark rounded p-1">' + rooms[user]["unread"] + '</span></div>' : '',
+                s = rooms[user].unread[main.username] ?  '<div class="ms-auto"><span class="badge badge-soft-dark rounded p-1" id="unread-'+is_user.username +'">'+rooms[user].unread[main.username] +'</span></div>'
+                    : '<div class="ms-auto"><span class="badge badge-soft-dark rounded p-1" id="unread-'+is_user.username +'"></span></div>',
                 i = '<a href="javascript: void(0);" class="unread-msg-user">',
                 l = 2 === rooms[user]['id'] ? "active" : "";
             document.getElementById(`${type}`) && document.getElementById(`${type}`).insertAdjacentHTML('afterbegin', '<li class="users-chatlist chatlist' + rooms[user]['id'] + '" id=' +
@@ -347,10 +337,58 @@ function chatList(type, rooms, main) {
     }
 }
 
-function connectSocket(type, chatId, user2) {
-    let url = type === 'group' ? `ws://${window.location.host}/ws/group/${chatId}?token=${localStorage.getItem('token')}` : `ws://${window.location.host}/ws/${chatId}?token=${localStorage.getItem('token')}`,
-        message_url = type === 'group' ? 'api/group-message/' + chatId : `api/room-messages/${chatId}`,
+let connectSocket = function (type, chatId, user2) {
+    url = `ws://${window.location.host}/ws/${chatId}?token=${localStorage.getItem('token')}`;
+        message_url = type === 'group' ? 'api/group-message/' + chatId : `api/room-messages/${chatId}`;
         socket = new WebSocket(url);
+        socket.onmessage = function (e) {
+        let message = JSON.parse(e.data);
+        if (message.type === 'typing' && message.user !== user2) {
+            document.getElementById('activity').innerText = 'typing..'
+            setTimeout(function () {
+                document.getElementById('activity').innerText = ''
+            }, 3000)
+        }
+        if (message.command) {
+            chatArrange(message, user2, type)
+        }
+    }
+    let l = document.querySelector("#chatinput-form"),
+        g = document.querySelector("#chat-input"),
+        u = document.getElementById('submit-btn');
+    l.addEventListener('submit', (e) => {
+        e.preventDefault() && e.stopPropagation();
+        let value = g.value,
+            o = document.querySelector(".image_pre"),
+            r = document.querySelector(".attchedfile_pre"),
+            replycard = document.querySelector('#reply'),
+            reply_id = replycard.getAttribute('dataid') ? replycard.getAttribute('dataid') : null,
+            reply_user = replycard.getAttribute('dataid') ? replycard.getAttribute('data-user') : null,
+            c = document.querySelector(".audiofile_pre");
+        replycard.removeAttribute('dataid');
+        const send_message = {
+            images: C,
+            files: L,
+            audio: S,
+            msg: value,
+            reply_id: reply_id,
+            reply_user: reply_user
+        }
+        socket.send(JSON.stringify(send_message));
+        (g.value = ""),
+        document.querySelector(".image_pre") &&
+        document.querySelector(".image_pre").remove(),
+            (document.getElementById("galleryfile-input").value = ""),
+        document.querySelector(".attchedfile_pre") &&
+        document.querySelector(".attchedfile_pre").remove(),
+            (document.getElementById("attachedfile-input").value = ""),
+        document.querySelector(".audiofile_pre") &&
+        document.querySelector(".audiofile_pre").remove(),
+            (document.getElementById("audiofile-input").value = ""),
+            document.getElementById("close_toggle").click();
+        document.querySelector('.file_Upload').classList.remove('show')
+
+    })
     fetch(message_url, {
         method: 'GET', headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -365,67 +403,13 @@ function connectSocket(type, chatId, user2) {
                 }
             }
         });
-    let l = document.querySelector("#chatinput-form"),
-        g = document.querySelector("#chat-input"),
-        u = document.getElementById('submit-btn')
-    socket.onmessage = function (e) {
-        let message = JSON.parse(e.data);
-        if (message.type === 'typing' && message.user !== user2) {
-            document.getElementById('activity').innerText = 'typing..'
-            setTimeout(function () {
-                document.getElementById('activity').innerText = ''
-            }, 3000)
-        }
-        if (message.command) {
-            chatArrange(message, user2, type)
-        }
-    }
-    let pressed = false
-    !pressed && l.addEventListener('submit', (e) => {
-        e.preventDefault() && e.stopPropagation();
-        pressed = true
-        let value = g.value,
-            o = document.querySelector(".image_pre"),
-            r = document.querySelector(".attchedfile_pre"),
-            replycard = document.querySelector('#reply'),
-            reply_id = replycard.getAttribute('dataid') ? replycard.getAttribute('dataid') : null,
-            reply_user = replycard.getAttribute('dataid') ? replycard.getAttribute('data-user') : null;
-        replycard.removeAttribute('dataid')
-        c = document.querySelector(".audiofile_pre");
-        let send_message =  {
-                images: C,
-                files: L,
-                audio: S,
-                msg: value,
-                reply_id: reply_id,
-                reply_user: reply_user
-            }
-            send_message['command'] = type !== 'group'? 'private_chat':'group_chat';
-
-        socket.send(JSON.stringify(send_message));
-        (g.value = ""),
-        document.querySelector(".image_pre") &&
-        document.querySelector(".image_pre").remove(),
-            (document.getElementById("galleryfile-input").value = ""),
-        document.querySelector(".attchedfile_pre") &&
-        document.querySelector(".attchedfile_pre").remove(),
-            (document.getElementById("attachedfile-input").value = ""),
-        document.querySelector(".audiofile_pre") &&
-        document.querySelector(".audiofile_pre").remove(),
-            (document.getElementById("audiofile-input").value = ""),
-            document.getElementById("close_toggle").click();
-            document.querySelector('.file_Upload').classList.remove('show')
-
-    })
-    pressed = false
-    document.getElementById("chat-input").focus();
-
     g && g.addEventListener('keypress', () => {
         socket.send(JSON.stringify({
             command: 'typing'
         }))
-    })
-}
+    });
+    document.getElementById("chat-input").focus();
+};
 
 function chatArrange(message, user2, type) {
     function p() {
@@ -546,7 +530,6 @@ function chatArrange(message, user2, type) {
 }
 
 function conversatonSettings(type, data) {
-
     let a = type === 'group' ? `<div id="channel-chat" class="remove position-relative">
                         <div class="p-3 p-lg-4 user-chat-topbar">
                             <div class="row align-items-center">
@@ -730,8 +713,7 @@ function conversatonSettings(type, data) {
                     </div>`;
     document.getElementById("empty-conversation").innerHTML = (a);
     document.getElementById(
-        "channel-chat"
-    ).style.display = "block";
+        "channel-chat").style.display = "block";
     document.getElementById("chat-input-section").style.display =
         "block";
     document.getElementById("chat-input").focus();
@@ -806,4 +788,21 @@ function Ai() {
                 })
             })
         })
+}
+
+!(function () {
+    let home = `ws://${window.location.host}/ws/home/?token=${localStorage.getItem('token')}`,
+        home_socket = new WebSocket(home)
+    home_socket.onmessage = function (e) {
+        let notify_message = JSON.parse(e.data)['payload']
+        console.log(notify_message, current)
+        document.getElementById(`unread-${notify_message.from}`) && (document.getElementById(`unread-${notify_message.from}`).innerText = notify_message.count)
+        if (current && (notify_message.from === current)) {
+            home_socket.send(JSON.stringify({
+                messages_from: notify_message.from,
+                seen: true
+            }))
+        }
     }
+})()
+

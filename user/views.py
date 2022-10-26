@@ -1,5 +1,4 @@
 from collections import defaultdict
-
 from django.shortcuts import render, redirect
 from djoser.views import UserViewSet
 from rest_framework.response import Response
@@ -16,14 +15,12 @@ from rest_framework.status import HTTP_204_NO_CONTENT
 def api_user(request):
     if request.user.is_authenticated:
         instance = UserInfoSerializer(request.user).data
-        print(request.user.profile.avatar)
+
         if request.method == 'POST':
             ser = ProfileSerializer(data=request.data)
             if ser.is_valid():
                 request.user.profile.avatar = request.data['avatar']
                 request.user.profile.save()
-            else:
-                print(ser.errors)
         return Response(instance)
 
 
@@ -32,6 +29,7 @@ def api_contacts(request):
     data = defaultdict(list)
     for i in string.ascii_uppercase:
         contacts = request.user.contacts.filter(first_name__startswith=i)
+
         for contact in contacts:
             data[i].append(UserInfoSerializer(contact).data)
     return Response(data)
@@ -48,8 +46,7 @@ class ActivateUser(UserViewSet):
 
     def activation(self, request, *args, **kwargs):
         super(ActivateUser, self).activation(request, *args, **kwargs)
-        response = redirect('login')
-        return response, Response(status=HTTP_204_NO_CONTENT)
+        return Response(status=HTTP_204_NO_CONTENT)
 
 
 def user_login(request, *args, **kwargs):

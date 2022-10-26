@@ -7,9 +7,9 @@ from .models import ChatRoom, PrivateMessage, GroupMessages, Group, Member
 # This is already defined to give only minimum info about the user needed
 
 class ChatRoomSerializers(serializers.ModelSerializer):
-    unread = serializers.SerializerMethodField(read_only=True)
     user1 = UserInfoSerializer(read_only=True)
     user2 = UserInfoSerializer(read_only=True)
+    unread = serializers.SerializerMethodField()
 
     class Meta:
         model = ChatRoom
@@ -19,7 +19,10 @@ class ChatRoomSerializers(serializers.ModelSerializer):
 
     def get_unread(self, obj):
         if isinstance(obj, ChatRoom):
-            return PrivateMessage.objects.filter(room=obj, read=False).count()
+            return {
+                obj.user2.username: PrivateMessage.manage.get_unread(obj, obj.user2),
+                obj.user1.username: PrivateMessage.manage.get_unread(obj, obj.user1)
+            }
 
 
 class MemberSerializer(serializers.ModelSerializer):
@@ -48,11 +51,15 @@ class GroupRoomSerializer(serializers.ModelSerializer):
             'members', 'name', 'icon', 'id', 'messagecount', 'memberscount'
         ]
 
-    def get_messagecount(self, value):
-        return GroupMessages.objects.filter(room=value).count()
-
+    def get_messagecount(self, obj):
+        if isinstance(obj, Group):
+            data = {}
+            for members in obj.members.all():
+                data[members.participant.username] = GroupMessages.manage.get_group_unread(obj, members.participant)
+            return data
     def get_memberscount(self, obj):
         return obj.members.count()
+
 
 class AlbumSerializer(serializers.RelatedField):
     def to_representation(self, value):
@@ -95,6 +102,7 @@ class RoomMessageSerializers(serializers.Serializer):
         if obj.images.all():
             return False
         return True
+
 
 class GroupMessageSerializer(serializers.Serializer):
     sender = UserInfoSerializer(read_only=True)
