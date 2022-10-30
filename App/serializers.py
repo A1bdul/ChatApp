@@ -57,6 +57,7 @@ class GroupRoomSerializer(serializers.ModelSerializer):
             for members in obj.members.all():
                 data[members.participant.username] = GroupMessages.manage.get_group_unread(obj, members.participant)
             return data
+
     def get_memberscount(self, obj):
         return obj.members.count()
 

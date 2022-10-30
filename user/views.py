@@ -1,11 +1,13 @@
-from collections import defaultdict
-from django.shortcuts import render, redirect
-from djoser.views import UserViewSet
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
 import string
-from user.serializers import UserInfoSerializer, ProfileSerializer
+from collections import defaultdict
+
+from django.shortcuts import render
+from djoser.views import UserViewSet
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 from rest_framework.status import HTTP_204_NO_CONTENT
+
+from user.serializers import UserInfoSerializer, ProfileSerializer
 
 
 # Create your views here.
@@ -15,7 +17,6 @@ from rest_framework.status import HTTP_204_NO_CONTENT
 def api_user(request):
     if request.user.is_authenticated:
         instance = UserInfoSerializer(request.user).data
-
         if request.method == 'POST':
             ser = ProfileSerializer(data=request.data)
             if ser.is_valid():
@@ -55,4 +56,3 @@ def user_login(request, *args, **kwargs):
 
 def user_register(request):
     return render(request, 'auth-register.html')
-

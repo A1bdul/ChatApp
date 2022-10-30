@@ -1,15 +1,14 @@
 import os
+import threading
 from typing import List, Any
 
-from dotenv import load_dotenv
 import cloudinary
-from channels.generic.websocket import AsyncJsonWebsocketConsumer
-
-from notification.models import Notification
-from user.models import User
-from App.models import ChatRoom, PrivateMessage, Group, Album, GroupMessages
-import threading
 from channels.db import database_sync_to_async
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from dotenv import load_dotenv
+
+from App.models import ChatRoom, PrivateMessage, Group, Album, GroupMessages
+from user.models import User
 
 load_dotenv()
 
@@ -60,7 +59,7 @@ class ChatAppConsumer(AsyncJsonWebsocketConsumer):
         """ Handles connection with websocket """
         # checks if both users are authenticated then gets or create their chatroom
         self.me = self.scope['user']
-
+        await self.accept()
         try:
             self.user2 = await database_sync_to_async(User.objects.get)(
                 username=self.scope['url_route']['kwargs']['id'])
@@ -72,17 +71,10 @@ class ChatAppConsumer(AsyncJsonWebsocketConsumer):
             self.room_name = f'private_room_{self.chat_room.id}'
             await self.channel_layer.group_add(self.room_name, self.channel_name)
             await database_sync_to_async(PrivateMessage.manage.read_all_message)(room=self.chat_room, user=self.me)
-            notifit = await database_sync_to_async(Notification.objects.filter)(to_user=self.me.id,
-                                                                                from_user=self.user2.id)
-            await database_sync_to_async(notifit.delete)()
         else:
             self.room_name = f'group_room_{str(self.chat_room.id)}'
             await self.channel_layer.group_add(self.room_name, self.channel_name)
             await database_sync_to_async(GroupMessages.manage.read_group_message)(room=self.chat_room, user=self.me)
-
-        channels_sockets.append(self)
-
-        await self.accept()
 
     async def receive_json(self, content, **kwargs):
         """ Handles all incoming message from websocket, each command is assigned to it own
@@ -113,10 +105,6 @@ class ChatAppConsumer(AsyncJsonWebsocketConsumer):
                                                                                 msg=message)
                 reply = None
                 reply_from = None
-            if self.private:
-                await database_sync_to_async(Notification.objects.create)(from_user=self.me, to_user=self.user2)
-            else:
-                await database_sync_to_async(Notification.objects.create)(group=self.chat_room, from_user=self.me)
 
             data = {
                 'type': 'websocket_private_chat',

@@ -1,8 +1,7 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
-from django.utils.translation import gettext_lazy as _
-from django.contrib.auth import settings
+from django.db import models
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 
 
 # Create your models here.
@@ -66,6 +65,15 @@ class ChatRoomManager(models.Manager):
             return ChatRoom.objects.create(user1=u1, user2=u2)
         return is_room
 
+    def get_connected_users(self, user):
+        rooms = ChatRoom.objects.filter(Q(user1=user) | Q(user2=user))
+        connected_users = []
+        for room in rooms:
+            conn_user = room.user1
+            if conn_user == user:
+                conn_user = room.user2
+            connected_users.append(conn_user.username)
+        return connected_users
 
 class ChatRoom(models.Model):
     user1 = models.ForeignKey(User, null=True, blank=True, related_name='user1', on_delete=models.SET_NULL)

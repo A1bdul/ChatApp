@@ -41,8 +41,8 @@ let url, message_url, socket, is_user, current;
                                 a = contact.profile.avatar
                     ? '<img src="' +
                     contact.profile.avatar +
-                    '" class="rounded-circle avatar-xs" alt=""><span class="user-status"></span>'
-                    : '<div class="avatar-xs"><span class="avatar-title rounded-circle bg-primary text-white"><span class="username">' + contact["first_name"][0] + "" + contact["last_name"][0] + '</span><span class="user-status"></span></span></div>';
+                    '" class="rounded-circle avatar-xs" alt=""><span class="user-status" id="status-'+contact.username+'"></span>'
+                    : '<div class="avatar-xs"><span class="avatar-title rounded-circle bg-primary text-white"><span class="username">' + contact["first_name"][0] + "" + contact["last_name"][0] + '</span><span class="user-status" id="status-'+contact.username+'" ></span></span></div>';
                             i = '<li id="'+contacts+'" data-type="'+cont+'"><div class="d-flex align-items-center">                  <div class="flex-shrink-0 me-2">                      <div class="avatar-xs">                          ' + a + '                      </div>                  </div>                  <div class="flex-grow-1">                      <p class=" mb-0" style="font-weight: 500">' + contact.first_name +' '+contact.last_name+ '</p>                  </div>                  <div class="flex-shrink-0">                      <div class="dropdown">                          <a href="#" class="text-muted dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">                              <i class="bx bx-dots-vertical-rounded align-middle"></i>                          </a>                          <div class="dropdown-menu dropdown-menu-end">                              <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Edit <i class="bx bx-pencil ms-2 text-muted"></i></a>                              <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Block <i class="bx bx-block ms-2 text-muted"></i></a>                              <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Remove <i class="bx bx-trash ms-2 text-muted"></i></a></div></div></div></div></li>';
                         }
                     }
@@ -50,12 +50,7 @@ let url, message_url, socket, is_user, current;
                        document.querySelectorAll(".sort-contact ul li").forEach(function (s) {
                 s.addEventListener("click", function (k) {
                     conversatonSettings('users', e)
-                    NProgress.start();
-	setTimeout(function() { NProgress.done(); $('.fade').removeClass('out'); }, 2000);
-
-                    if ( document.getElementById('channel-chat')) {
-                        current = is_user.username;
-                    }
+                    current = contact.username;
                     let contact = data[s.getAttribute('data-type')][s.id]
                     var t = contact.first_name;
                     document.querySelector(".text-truncate .user-profile-show").innerHTML = t, document.querySelector(".user-profile-desc .text-truncate").innerHTML = t, document.querySelector(".audiocallModal .text-truncate").innerHTML = t, document.querySelector(".videocallModal .text-truncate").innerHTML = t, document.querySelector(".user-profile-sidebar .user-name").innerHTML = t;
@@ -169,12 +164,9 @@ let url, message_url, socket, is_user, current;
                                     type = e.getAttribute('data-name'),
                                     rooms = room[type];
                                 conversatonSettings('users', rooms[user])
-
-
                                 is_user = (main.username !== rooms[user]['user1'].username) ? rooms[user]['user1'] : rooms[user]['user2'];
-                                if ( document.getElementById('channel-chat')) {
-                                    current =  is_user.username;
-                                }
+                                current = is_user.username;
+
                                 let a = is_user["first_name"],
                                     n = is_user['avatar'] ? is_user['avatar'] : '/assets/images/users/user-dummy-img.jpg';
 
@@ -230,17 +222,15 @@ let url, message_url, socket, is_user, current;
                             e.addEventListener('click', () => {
                                 const user = e.id;
                                 conversatonSettings('group', group_chat[user])
-
-                                if ( document.getElementById('channel-chat')) {
-                                    current = group_chat[user].id
-                                }
+                                current = group_chat[user].id;
                                 let a = group_chat[user].name;
                                 (document
                                     .getElementById("channel-chat")
                                     .querySelector(
                                         ".text-truncate .user-profile-show"
                                     ).innerHTML = a)
-                                connectSocket('group', group_chat[user].id, main.username)
+                                connectSocket('group', group_chat[user].id, main.username);
+
                             })
                         })
                     }
@@ -263,26 +253,28 @@ let url, message_url, socket, is_user, current;
         a.addEventListener("load", function () {
             e.forEach(image => image.src = a.result);
             fetch('/user-api', {
-                            method: 'POST', headers: {
-                                'X-CSRFToken': getToken("csrftoken"),
-                                'X-Requested-With':'XMLHttpRequest',
-                                "Accept": 'application/json',
-                                'Authorization' : token
-                            },
-            body: formData
+                method: 'POST', headers: {
+                    'X-CSRFToken': getToken("csrftoken"),
+                    'X-Requested-With': 'XMLHttpRequest',
+                    "Accept": 'application/json',
+                    'Authorization': token
+                },
+                body: formData
             })
-            .then(r => r.json())
+                .then(r => {
+                    if (r.ok) {
+                        return r.json()
+                    }
+                })
             .then(data => {
+                setTimeout(function () {
+                    NProgress.done();
+                    document.querySelector('.fade').removeClass('out');
+                }, 2000);
             });
             }, !1), t && a.readAsDataURL(t), f
-
     });
-    for (var j = document.getElementsByClassName("favourite-btn"), T = 0; T < j.length; T++) {
-        var I = j[T];
-        I.onclick = function () {
-            I.classList.toggle("active")
-        }
-    }
+
     new FgEmojiPicker({
         trigger: [".emoji-btn"],
         removeOnSelection: !1,
@@ -313,8 +305,8 @@ function chatList(type, rooms, main) {
             const a = is_user.profile["avatar"]
                     ? '<img src="' +
                     is_user.profile["avatar"] +
-                    '" class="rounded-circle avatar-xs" alt=""><span class="user-status"></span>'
-                    : '<div class="avatar-xs"><span class="avatar-title rounded-circle bg-primary text-white"><span class="username">' + is_user["first_name"][0] + "" + is_user["last_name"][0] + '</span><span class="user-status"></span></span></div>',
+                    '" class="rounded-circle avatar-xs" alt=""><span class="user-status" id="status-'+is_user.username+'"></span>'
+                    : '<div class="avatar-xs"><span class="avatar-title rounded-circle bg-primary text-white"><span class="username">' + is_user["first_name"][0] + "" + is_user["last_name"][0] + '</span><span id="status-'+is_user.username+'" class="user-status"></span></span></div>',
                 s = rooms[user].unread[main.username] ?  '<div class="ms-auto"><span class="badge badge-soft-dark rounded p-1" id="unread-'+is_user.username +'">'+rooms[user].unread[main.username] +'</span></div>'
                     : '<div class="ms-auto"><span class="badge badge-soft-dark rounded p-1" id="unread-'+is_user.username +'"></span></div>',
                 i = '<a href="javascript: void(0);" class="unread-msg-user">',
@@ -338,13 +330,14 @@ function chatList(type, rooms, main) {
 }
 
 let connectSocket = function (type, chatId, user2) {
+
     url = `ws://${window.location.host}/ws/${chatId}?token=${localStorage.getItem('token')}`;
         message_url = type === 'group' ? 'api/group-message/' + chatId : `api/room-messages/${chatId}`;
         socket = new WebSocket(url);
         socket.onmessage = function (e) {
         let message = JSON.parse(e.data);
         if (message.type === 'typing' && message.user !== user2) {
-            document.getElementById('activity').innerText = 'typing..'
+        document.getElementById('activity') && (document.getElementById('activity').innerText = 'typing..')
             setTimeout(function () {
                 document.getElementById('activity').innerText = ''
             }, 3000)
@@ -375,6 +368,7 @@ let connectSocket = function (type, chatId, user2) {
             reply_user: reply_user
         }
         socket.send(JSON.stringify(send_message));
+
         (g.value = ""),
         document.querySelector(".image_pre") &&
         document.querySelector(".image_pre").remove(),
@@ -387,7 +381,6 @@ let connectSocket = function (type, chatId, user2) {
             (document.getElementById("audiofile-input").value = ""),
             document.getElementById("close_toggle").click();
         document.querySelector('.file_Upload').classList.remove('show')
-
     })
     fetch(message_url, {
         method: 'GET', headers: {
@@ -493,12 +486,11 @@ function chatArrange(message, user2, type) {
             message.files,
             message.dropdown,
             message.reply
-        ) ),
+        )),
         (i +=
-            '<div class="conversation-name"><small class="text-muted time">' + message.created_at+ '    '+s+'</small> <span class="text-success check-message-icon"><i class="bx bx-check-double"></i></span></div>'),
+            '<div class="conversation-name"><small class="text-muted time">' + message.created_at + '    ' + s + '</small> <span class="text-success check-message-icon"><i class="bx bx-check-double"></i></span></div>'),
         (i += "</div>                </div>            </li>");
-        !document.getElementById(`chat-${message.id}`) && (document.querySelector('.chat-conversation-list').innerHTML += i);
-
+    !document.getElementById(`message.id`) && (document.querySelector('.chat-conversation-list').innerHTML += i);
     if (!0 === message.dropdown) {
         document.getElementById(`reply-message-${message.id}`) && document.getElementById(`reply-message-${message.id}`).addEventListener('click', (s) => {
             let i = document.querySelector("#reply"),
@@ -516,7 +508,7 @@ function chatArrange(message, user2, type) {
             document.querySelector('#reply_text').innerText = e;
             document.querySelector('#reply_user').innerText = a;
         })
-        document.getElementById(`copy-message-${message.id}`) && document.getElementById(`copy-message-${message.id}`).addEventListener('click', () => {
+        document.getElementById(`copy-message-${message.id}`).addEventListener('click', () => {
         let e = document.getElementById(`${message.id}`).innerText;
         navigator.clipboard.writeText(e)
         document.getElementById("chat-input").focus();
@@ -717,6 +709,12 @@ function conversatonSettings(type, data) {
     document.getElementById("chat-input-section").style.display =
         "block";
     document.getElementById("chat-input").focus();
+    for (let j = document.getElementsByClassName("favourite-btn"), T = 0; T < j.length; T++) {
+        let I = j[T];
+        I.onclick = function () {
+            I.classList.toggle("active")
+        }
+    }
     f();
     F();
 }
@@ -750,6 +748,7 @@ function f() {
             .forEach(function (e) {
                 e.addEventListener("click", function (e) {
                     f.forEach(link => link.classList.remove('user-chat-show'));
+                    current = ''
                 });
             });
     let t = document.querySelector(".user-profile-sidebar");
@@ -785,23 +784,27 @@ function Ai() {
             e.addEventListener("click", function (e) {
                 a.forEach(function (e) {
                     e.classList.remove("user-chat-show")
+                    current = ''
                 })
             })
         })
 }
 
-!(function () {
+!(function (data) {
     let home = `ws://${window.location.host}/ws/home/?token=${localStorage.getItem('token')}`,
         home_socket = new WebSocket(home)
     home_socket.onmessage = function (e) {
+        console.log(JSON.parse(e.data))
         let notify_message = JSON.parse(e.data)['payload']
-        console.log(notify_message, current)
-        document.getElementById(`unread-${notify_message.from}`) && (document.getElementById(`unread-${notify_message.from}`).innerText = notify_message.count)
         if (current && (notify_message.from === current)) {
+            notify_message['count'] = ''
             home_socket.send(JSON.stringify({
-                messages_from: notify_message.from,
-                seen: true
+                home: notify_message.from
             }))
+        }
+        document.getElementById(`unread-${notify_message.from}`) && (document.getElementById(`unread-${notify_message.from}`).innerText = notify_message.count)
+        home_socket.onclose = function (event) {
+            console.log('please refresh')
         }
     }
 })()

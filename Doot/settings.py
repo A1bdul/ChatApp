@@ -145,11 +145,11 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'assets')
 ]
 #
-# CLOUDINARY_STORAGE = {
-#     'CLOUD_NAME': os.getenv('cloud_name'),
-#     'API_KEY': os.getenv('api_key'),
-#     'API_SECURE': os.getenv('api_secret')
-# }
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('cloud_name'),
+    'API_KEY': os.getenv('api_key'),
+    'API_SECRET': os.getenv('api_secret')
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
@@ -158,7 +158,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'user.User'
 
-# DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 LOGIN_URL = 'auth/login'
 

@@ -21,15 +21,16 @@ class MessageManager(models.Manager):
     def read_all_message(self, room, user):
         messages = PrivateMessage.objects.filter(room=room)
         for message in messages:
-            message.read.add(user)
-            message.save()
+            if user not in message.read.all():
+                message.read.add(user)
+                message.save()
 
     def read_group_message(self, room, user):
         messages = GroupMessages.objects.filter(room=room)
-        member = Member.objects.get(participant=user)
         for message in messages:
-            message.read.add(member.participant)
-            message.save()
+            if user not in message.read.all():
+                message.read.add(user)
+                message.save()
 
     def get_unread(self, room, user):
         x = PrivateMessage.objects.filter(room=room)
