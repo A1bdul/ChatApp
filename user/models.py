@@ -75,6 +75,7 @@ class ChatRoomManager(models.Manager):
             connected_users.append(conn_user.username)
         return connected_users
 
+
 class ChatRoom(models.Model):
     user1 = models.ForeignKey(User, null=True, blank=True, related_name='user1', on_delete=models.SET_NULL)
     user2 = models.ForeignKey(User, blank=True, null=True, related_name='user2', on_delete=models.SET_NULL)

@@ -10,6 +10,7 @@ channel_layer = get_channel_layer()
 
 @receiver([post_save], sender=PrivateMessage)
 def private_notification(sender, instance, created, *args, **kwargs):
+    print("created!!")
     if instance.sender == instance.room.user1:
         to_user = instance.room.user2
     else:
@@ -21,6 +22,7 @@ def private_notification(sender, instance, created, *args, **kwargs):
         'type': 'send_status', 'from': instance.sender.username,
         'count': count
     })
+    print("sent")
 
 
 @receiver(post_save, sender=GroupMessages)

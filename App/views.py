@@ -14,12 +14,6 @@ from user.models import User
 from collections import namedtuple
 
 
-class HomeView(View):
-    template_name = 'index.html'
-
-    def get(self, request):
-        return render(request, self.template_name)
-
 
 @api_view(['GET', 'POST'])
 def api_room_view(request):

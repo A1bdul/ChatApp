@@ -9,3 +9,4 @@ python-dotenv~=0.19.2
 djangorestframework-simplejwt
 sqlparse~=0.4.2
 djoser~=2.1.0
+corsheaders

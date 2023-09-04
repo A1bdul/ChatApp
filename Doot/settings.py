@@ -39,20 +39,22 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'user.apps.UserConfig',
-    'App',
-    'notification',
     'rest_framework',
     'rest_framework_simplejwt',
     'channels',
     'cloudinary',
-    'djoser'
+    'djoser',
+    'user.apps.UserConfig',
+    'App',
+    'notification',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     # 'django.middleware.cache.UpdateCacheMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -66,8 +68,7 @@ ROOT_URLCONF = 'Doot.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
-        ,
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -141,10 +142,6 @@ USE_TZ = True
 
 STATIC_URL = '/assets/'
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'assets')
-]
-#
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.getenv('cloud_name'),
     'API_KEY': os.getenv('api_key'),
@@ -171,6 +168,10 @@ REST_FRAMEWORK = {
     ]
 }
 
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173'
+]
+
 DJOSER = {
     'USER_ID_FIELD': 'username',
     'LOGIN_FIELD': 'email',
@@ -182,7 +183,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 SITE_NAME = 'ChatApp'
 
 SIMPLE_JWT = {
-    'AUTH_HEADER_TYPES': ['Bearer'],
-    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(hours=2),
-    'REFRESH_TOKEN_LIFETIME': datetime.timedelta(hours=4)
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(hours=5),
+    'REFRESH_TOKEN_LIFETIME': datetime.timedelta(hours=10),
 }

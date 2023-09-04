@@ -1,10 +1,10 @@
 from django.contrib import admin
 from django.urls import path, include
+from djoser.views import TokenCreateView
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
     path('', include('App.url')),
     path('', include('user.url')),
     path('auth/', include('djoser.urls')),
-    path('auth/', include('djoser.urls.jwt'))
+    path('auth/', include('djoser.urls.jwt')),
 ]

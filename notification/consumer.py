@@ -30,7 +30,7 @@ class MyConsumer(AsyncJsonWebsocketConsumer):
         try:
             group = await database_sync_to_async(Group.objects.get)(id=uuid.UUID(from_user))
             await database_sync_to_async(GroupMessages.manage.read_group_message)(room=group, user=self.user)
-        except ValueError:
+        except:
             user2 = await database_sync_to_async(User.objects.get)(username=from_user)
             room = await database_sync_to_async(ChatRoom.get_room.get_or_create_room)(self.user, user2)
             await database_sync_to_async(PrivateMessage.manage.read_all_message)(room=room, user=self.user)
@@ -42,4 +42,5 @@ class MyConsumer(AsyncJsonWebsocketConsumer):
         pass
 
     async def disconnect(self, code):
+        
         await self.channel_layer.group_discard(self.room, self.channel_name)

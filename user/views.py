@@ -48,11 +48,3 @@ class ActivateUser(UserViewSet):
     def activation(self, request, *args, **kwargs):
         super(ActivateUser, self).activation(request, *args, **kwargs)
         return Response(status=HTTP_204_NO_CONTENT)
-
-
-def user_login(request, *args, **kwargs):
-    return render(request, 'auth-login.html')
-
-
-def user_register(request):
-    return render(request, 'auth-register.html')
