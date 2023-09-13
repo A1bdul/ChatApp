@@ -122,3 +122,4 @@ class PrivateMessage(DefaultMessages):
 
     def __str__(self):
         return f'message from {self.sender}, {self.id}'
+    

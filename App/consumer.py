@@ -6,7 +6,6 @@ import cloudinary
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from dotenv import load_dotenv
-
 from App.models import ChatRoom, PrivateMessage, Group, Album, GroupMessages
 from user.models import User
 
@@ -49,16 +48,22 @@ class CloudinaryUpload(threading.Thread):
         return images
 
 
+
+
 class ChatAppConsumer(AsyncJsonWebsocketConsumer):
+    """
+
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(args, kwargs)
+        self.room_name = None
         self.private = False
-        self.sent = True
 
     async def connect(self):
         """ Handles connection with websocket """
         # checks if both users are authenticated then gets or create their chatroom
+
         self.me = self.scope['user']
         await self.accept()
         try:
@@ -70,16 +75,14 @@ class ChatAppConsumer(AsyncJsonWebsocketConsumer):
         if self.private:
             self.chat_room = await database_sync_to_async(ChatRoom.get_room.get_or_create_room)(self.me, self.user2)
             self.room_name = f'private_room_{self.chat_room.id}'
-            await self.channel_layer.group_add(self.room_name, self.channel_name)
             await database_sync_to_async(PrivateMessage.manage.read_all_message)(room=self.chat_room, user=self.me)
         else:
             self.room_name = f'group_room_{str(self.chat_room.id)}'
-            await self.channel_layer.group_add(self.room_name, self.channel_name)
             await database_sync_to_async(GroupMessages.manage.read_group_message)(room=self.chat_room, user=self.me)
 
+        await self.channel_layer.group_add(self.room_name, self.channel_name)
+
     async def receive_json(self, content, **kwargs):
-        print(self.room_name)
-        self.sent = True
         """ Handles all incoming message from websocket, each command is assigned to it own
             'type' function for execution
         """
@@ -96,7 +99,6 @@ class ChatAppConsumer(AsyncJsonWebsocketConsumer):
             self.msg = GroupMessages
 
         if content.get('images') or content.get('msg') or content.get('files'):
-            print(True) 
             if content.get('reply_id') is not None:
                 # if this message is replying to a previous chat, assign reply to message in database
                 reply = await database_sync_to_async(self.msg.objects.get)(id=content.get('reply_id'))
@@ -133,7 +135,6 @@ class ChatAppConsumer(AsyncJsonWebsocketConsumer):
 
     async def websocket_typing(self, event):
         """ handles all websocket typing command """
-        print("typing")
         await self.send_json({
             # send back message to the websocket ...
             'type': 'typing',
@@ -141,8 +142,6 @@ class ChatAppConsumer(AsyncJsonWebsocketConsumer):
         })
 
     async def websocket_private_chat(self, event):
-        
-        
 
         """ Handles all private chat message incoming from websocket """
         message = {
@@ -171,9 +170,7 @@ class ChatAppConsumer(AsyncJsonWebsocketConsumer):
                     'first_name': event['reply_from'].first_name
                 }
             }
-        if self.sent:
-            self.sent = False
-            await self.send_json(message)
+        await self.send_json(message)
 
     async def disconnect(self, code):
         await self.channel_layer.group_discard(self.room_name, self.channel_name)

@@ -27,7 +27,7 @@ class RoomMessages(APIView):
     def get(self, request, *args, **kwargs):
         user2 = User.objects.get(username=kwargs['username'])
         room = ChatRoom.objects.filter(Q(user1=request.user, user2=user2) | Q(user2=request.user, user1=user2)).first()
-        messages = PrivateMessage.manage.get_queryset(room=room)[:50]
+        messages = PrivateMessage.manage.get_queryset(room=room)
         instance = RoomMessageSerializers(messages, many=True)
         return Response(instance.data)
 

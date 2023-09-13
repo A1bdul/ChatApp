@@ -98,6 +98,12 @@ class Profile(models.Model):
     avatar = models.ImageField(blank=True, null=True, upload_to='assets/avatars')
     cover_image = models.ImageField(blank=True, null=True, upload_to='cover_image')
     favourite = models.ManyToManyField(ChatRoom, blank=True, related_name='favourite')
+    archived = models.ManyToManyField(ChatRoom, blank=True, related_name='Archived')
 
     def __str__(self):
         return self.user.username
+
+
+class Preference(models.Model):
+    chat_background = models.CharField(max_length=200)
+    theme = models.CharField(max_length=20, choices=())
