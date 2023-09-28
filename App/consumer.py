@@ -6,19 +6,10 @@ import cloudinary
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from dotenv import load_dotenv
-from App.models import ChatRoom, PrivateMessage, Group, Album, GroupMessages
+from App.models import ChatRoom, PrivateMessage, Group, Album, GroupMessages, Member
 from user.models import User
 
 load_dotenv()
-
-channels_sockets = []
-
-
-async def disconnect_existing_sockets(sockets):
-    if sockets:
-        for socket in sockets:
-            await socket.close()
-    channels_sockets.clear()
 
 
 class CloudinaryUpload(threading.Thread):
@@ -41,13 +32,11 @@ class CloudinaryUpload(threading.Thread):
                 images.append(new_img['secure_url'])
                 image = await database_sync_to_async(Album.objects.create)(images=new_img['secure_url'])
                 await database_sync_to_async(self.msg.images.add)(image)
-            except cloudinary.exceptions.Error as e:
+            except cloudinary.exceptions.Error:
                 image = await database_sync_to_async(Album.objects.create)(images='/assets/images/small/img-1.jpg')
                 await database_sync_to_async(self.msg.images.add)(image)
                 images.append(image.images)
         return images
-
-
 
 
 class ChatAppConsumer(AsyncJsonWebsocketConsumer):
@@ -57,8 +46,12 @@ class ChatAppConsumer(AsyncJsonWebsocketConsumer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(args, kwargs)
+        self.me = None
+        self.user2 = None
+        self.chat_room = None
         self.room_name = None
         self.private = False
+        self.msg = None
 
     async def connect(self):
         """ Handles connection with websocket """
@@ -76,11 +69,17 @@ class ChatAppConsumer(AsyncJsonWebsocketConsumer):
             self.chat_room = await database_sync_to_async(ChatRoom.get_room.get_or_create_room)(self.me, self.user2)
             self.room_name = f'private_room_{self.chat_room.id}'
             await database_sync_to_async(PrivateMessage.manage.read_all_message)(room=self.chat_room, user=self.me)
+            await database_sync_to_async(self.chat_room.connected_users.add)(self.me)
         else:
             self.room_name = f'group_room_{str(self.chat_room.id)}'
+            member = await database_sync_to_async(Member.objects.get)(participant=self.me)
+            await database_sync_to_async(self.chat_room.connected_members.add)(member)
             await database_sync_to_async(GroupMessages.manage.read_group_message)(room=self.chat_room, user=self.me)
 
         await self.channel_layer.group_add(self.room_name, self.channel_name)
+
+    def get_users(self):
+        return self.chat_room.connected_users.all()
 
     async def receive_json(self, content, **kwargs):
         """ Handles all incoming message from websocket, each command is assigned to it own
@@ -111,7 +110,27 @@ class ChatAppConsumer(AsyncJsonWebsocketConsumer):
                                                                                 msg=message)
                 reply = None
                 reply_from = None
-
+            if self.private:
+                if await database_sync_to_async(self.chat_room.get_if_connected_user)(self.user2):
+                    await database_sync_to_async(PrivateMessage.manage.read_all_message)(room=self.chat_room,
+                                                                                         user=self.user2)
+                else:
+                    await self.channel_layer.group_send(f'notification_to_{self.user2.username}', {
+                        "type": "send_notification",
+                        "private": self.private,
+                        'user': self.me.username,
+                        'count': await database_sync_to_async(PrivateMessage.manage.get_unread)(self.chat_room,
+                                                                                                self.user2)
+                    })
+            else:
+                for members in await database_sync_to_async(self.chat_room.get_not_connected_members)():
+                    await self.channel_layer.group_send(f'notification_to_{members.participant.username}', {
+                        "type": "send_notification",
+                        "private": self.private,
+                        "group": self.chat_room.id,
+                        "count": await database_sync_to_async(GroupMessages.manage.get_group_unread)(self.chat_room,
+                                                                                                     members.participant)
+                    })
             data = {
                 'type': 'websocket_private_chat',
                 'text': new_msg.msg,
@@ -159,7 +178,8 @@ class ChatAppConsumer(AsyncJsonWebsocketConsumer):
             'files': event['files'],
             'dropdown': event['dropdown'],
             "created_at": event["created_at"],
-            'reply': None
+            'reply': None,
+            'read': await database_sync_to_async(self.chat_room.get_if_connected_user)(self.user2)
         }
         if event.get('reply') is not None:
             message['reply'] = {
@@ -173,4 +193,5 @@ class ChatAppConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json(message)
 
     async def disconnect(self, code):
+        await database_sync_to_async(self.chat_room.connected_users.remove)(self.me)
         await self.channel_layer.group_discard(self.room_name, self.channel_name)

@@ -48,3 +48,4 @@ class ActivateUser(UserViewSet):
     def activation(self, request, *args, **kwargs):
         super(ActivateUser, self).activation(request, *args, **kwargs)
         return Response(status=HTTP_204_NO_CONTENT)
+

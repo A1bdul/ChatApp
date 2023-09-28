@@ -72,10 +72,11 @@ class DefaultMessages(BaseModel):
     read = models.ManyToManyField(User, default=sender)
 
     def save(
-        self, force_insert=False, force_update=False, using=None, update_fields=None
+            self, force_insert=False, force_update=False, using=None, update_fields=None
     ):
         super(DefaultMessages, self).save()
         self.read.add(self.sender)
+
 
 class Member(models.Model):
     """ Model for the members in the group chat, the is_admin attribute handles
@@ -93,6 +94,14 @@ class Group(BaseModel):
     icon = models.ImageField(blank=True, null=True)
     name = models.CharField(max_length=200)
     members = models.ManyToManyField(Member, blank=False)
+    connected_users = models.ManyToManyField(Member, related_name='connected_members')
+
+    def get_not_connected_members(self):
+        not_connected_members = []
+        for members in self.members.all():
+            if members not in self.connected_users.all():
+                not_connected_members.append(members)
+        return not_connected_members
 
 
 class GroupMessages(DefaultMessages):
@@ -122,4 +131,3 @@ class PrivateMessage(DefaultMessages):
 
     def __str__(self):
         return f'message from {self.sender}, {self.id}'
-    

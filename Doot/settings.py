@@ -169,7 +169,9 @@ REST_FRAMEWORK = {
 }
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173'
+    'http://localhost:5173',
+    "http://172.20.10.8:5173",
+    "http://192.168.43.81:5173"
 ]
 
 DJOSER = {
@@ -187,3 +189,4 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': datetime.timedelta(hours=5),
     'REFRESH_TOKEN_LIFETIME': datetime.timedelta(hours=10),
 }
+

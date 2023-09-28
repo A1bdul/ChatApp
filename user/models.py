@@ -87,6 +87,9 @@ class ChatRoom(models.Model):
     def __str__(self):
         return f'chat Room for {self.user1} and {self.user2}'
 
+    def get_if_connected_user(self, user):
+        return user in self.connected_users.all()
+
     class Meta:
         app_label = 'App'
 

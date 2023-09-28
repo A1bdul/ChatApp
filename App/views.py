@@ -25,11 +25,15 @@ def api_room_view(request):
 
 class RoomMessages(APIView):
     def get(self, request, *args, **kwargs):
+        data = {}
         user2 = User.objects.get(username=kwargs['username'])
         room = ChatRoom.objects.filter(Q(user1=request.user, user2=user2) | Q(user2=request.user, user1=user2)).first()
         messages = PrivateMessage.manage.get_queryset(room=room)
-        instance = RoomMessageSerializers(messages, many=True)
-        return Response(instance.data)
+        instance = RoomMessageSerializers(messages, context={
+            'request': request
+        }, many=True).data
+        # instance["unread"] = 22
+        return Response(instance)
 
 
 @api_view(['GET'])
@@ -42,7 +46,9 @@ def api_all_rooms(request):
                    if x not in user.profile.favourite.all()],
         channelList=Group.objects.filter(members__participant=user)
     )
-    instance = HomeFeedSerializers(rooms).data
+    instance = HomeFeedSerializers(rooms, context={
+        "request": request
+    }).data
 
     return Response(instance)
 

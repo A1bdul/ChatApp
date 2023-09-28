@@ -7,22 +7,23 @@ from .models import ChatRoom, PrivateMessage, GroupMessages, Group, Member
 # This is already defined to give only minimum info about the user needed
 
 class ChatRoomSerializers(serializers.ModelSerializer):
-    user1 = UserInfoSerializer(read_only=True)
-    user2 = UserInfoSerializer(read_only=True)
+    user2 = serializers.SerializerMethodField()
     unread = serializers.SerializerMethodField()
 
     class Meta:
         model = ChatRoom
         fields = [
-            'user1', 'user2', 'id', 'unread'
+            'user2', 'id', 'unread'
         ]
 
     def get_unread(self, obj):
-        if isinstance(obj, ChatRoom):
-            return {
-                obj.user2.username: PrivateMessage.manage.get_unread(obj, obj.user2),
-                obj.user1.username: PrivateMessage.manage.get_unread(obj, obj.user1)
-            }
+        return PrivateMessage.manage.get_unread(obj, self.context["request"].user)
+
+    def get_user2(self, obj):
+        response = UserInfoSerializer(obj.user1, read_only=True)
+        if obj.user1 == self.context["request"].user:
+            response = UserInfoSerializer(obj.user2, read_only=True)
+        return response.data
 
 
 class MemberSerializer(serializers.ModelSerializer):
@@ -91,6 +92,7 @@ class RoomMessageSerializers(serializers.Serializer):
     images = AlbumSerializer(many=True, read_only=True)
     files = FileSerializer(many=True, read_only=True)
     id = serializers.IntegerField(read_only=True)
+    read = serializers.SerializerMethodField()
     reply = MessageReplySerializer()
 
     class Meta:
@@ -98,6 +100,12 @@ class RoomMessageSerializers(serializers.Serializer):
         fields = [
             'sender', 'id', 'msg', 'reply', 'created_at', 'images', 'files', 'dropdown'
         ]
+
+    def get_read(self, obj):
+        user2 = obj.room.user1
+        if obj.room.user1 == self.context["request"].user:
+            user2 = obj.room.user2
+        return user2 in obj.read.all()
 
     def get_dropdown(self, obj):
         if obj.images.all():
