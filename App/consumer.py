@@ -73,7 +73,7 @@ class ChatAppConsumer(AsyncJsonWebsocketConsumer):
         else:
             self.room_name = f'group_room_{str(self.chat_room.id)}'
             member = await database_sync_to_async(Member.objects.get)(participant=self.me)
-            await database_sync_to_async(self.chat_room.connected_members.add)(member)
+            await database_sync_to_async(self.chat_room.connected_users.add)(member)
             await database_sync_to_async(GroupMessages.manage.read_group_message)(room=self.chat_room, user=self.me)
 
         await self.channel_layer.group_add(self.room_name, self.channel_name)
