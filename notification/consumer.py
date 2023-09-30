@@ -1,20 +1,18 @@
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
-CONNECTIONS = []
+CONNECTIONS = set()
 
 
 class MyConsumer(AsyncJsonWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(args, kwargs)
-        self.me = None
         self.user = None
         self.room = None
 
     async def connect(self):
         self.user = self.scope.get('user')
         await self.accept()
-        self.me = self.user.username
-        self.room = f'notification_to_{self.me}'
+        self.room = f'notification_to_{self.user.id}'
         await self.channel_layer.group_add(self.room, self.channel_name)
 
     async def receive_json(self, content, **kwargs):
@@ -23,11 +21,14 @@ class MyConsumer(AsyncJsonWebsocketConsumer):
             to = content.get("to")
             await self.channel_layer.group_send(f"notification_to_{to}", {
                 "type": "read_messages",
-                "user": self.me
+                "user": self.user.id
             })
 
-    async def send_status(self, event):
-        await self.send_json({'payload': event})
+    async def chat_messages(self, event):
+        await self.send({
+            'chat_messages': True,
+            "payload": event["data"]
+        })
 
     async def read_messages(self, event):
         await self.send_json({

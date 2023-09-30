@@ -175,7 +175,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 DJOSER = {
-    'USER_ID_FIELD': 'username',
+    'USER_ID_FIELD': 'id',
     'LOGIN_FIELD': 'email',
     'SEND_ACTIVATION_EMAIL': True,
     'ACTIVATION_URL': 'auth/activate/{uid}/{token}',

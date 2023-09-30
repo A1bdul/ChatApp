@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.db.models import Q
@@ -6,24 +8,21 @@ from django.utils.translation import gettext_lazy as _
 
 # Create your models here.
 class UserManager(BaseUserManager):
-    def create_user(self, email, username, password, **extra_fields):
+    def create_user(self, email, password, **extra_fields):
         if not email:
-            raise ValueError(_('Email account is needed'))
-
-        if not username:
             raise ValueError(_('Email account is needed'))
 
         if not password:
             raise ValueError(_('Email account is needed'))
 
         email = self.normalize_email(email)
-        user = self.model(email=email, username=username, **extra_fields)
+        user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save()
         Profile.objects.create(user=user)
         return user
 
-    def create_superuser(self, email, username, password, **extra_fields):
+    def create_superuser(self, email,  password, **extra_fields):
         if extra_fields.get('is_staff') is not True:
             extra_fields['is_staff'] = True
 
@@ -33,24 +32,24 @@ class UserManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             extra_fields['is_superuser'] = True
 
-        return self.create_user(email, username, password, **extra_fields)
+        return self.create_user(email, password, **extra_fields)
 
 
 class User(AbstractUser):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
     first_name = models.CharField(max_length=200, blank=True, null=True)
     last_name = models.CharField(max_length=200, blank=True, null=True)
-    username = models.CharField(max_length=200, unique=True, blank=True, null=True)
     email = models.CharField(max_length=200, unique=True, blank=True, null=True)
     password = models.CharField(max_length=200)
 
     contacts = models.ManyToManyField('self', symmetrical=False, related_name='contact', blank=True)
     objects = UserManager()
 
-    REQUIRED_FIELDS = 'username',
+    REQUIRED_FIELDS = 'first_name', 'last_name'
     USERNAME_FIELD = 'email'
 
     def __str__(self):
-        return self.username
+        return self.first_name + " " + self.last_name
 
     class Meta:
         verbose_name = 'user'
@@ -72,7 +71,7 @@ class ChatRoomManager(models.Manager):
             conn_user = room.user1
             if conn_user == user:
                 conn_user = room.user2
-            connected_users.append(conn_user.username)
+            connected_users.append(conn_user.id)
         return connected_users
 
 
@@ -104,7 +103,7 @@ class Profile(models.Model):
     archived = models.ManyToManyField(ChatRoom, blank=True, related_name='Archived')
 
     def __str__(self):
-        return self.user.username
+        return self.user.id
 
 
 class Preference(models.Model):

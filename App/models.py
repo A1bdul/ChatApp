@@ -94,6 +94,7 @@ class Group(BaseModel):
     icon = models.ImageField(blank=True, null=True)
     name = models.CharField(max_length=200)
     members = models.ManyToManyField(Member, blank=False)
+    description = models.TextField(max_length=2048)
     connected_users = models.ManyToManyField(Member, related_name='connected_members')
 
     def get_not_connected_members(self):

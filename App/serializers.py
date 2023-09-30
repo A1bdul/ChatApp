@@ -42,25 +42,18 @@ class MemberSerializer(serializers.ModelSerializer):
 
 class GroupRoomSerializer(serializers.ModelSerializer):
     members = MemberSerializer(many=True)
-    messagecount = serializers.SerializerMethodField()
+    unread = serializers.SerializerMethodField()
     id = serializers.UUIDField()
-    memberscount = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Group
         fields = [
-            'members', 'name', 'icon', 'id', 'messagecount', 'memberscount'
+            'members', 'name', 'icon', 'id', 'unread'
         ]
 
-    def get_messagecount(self, obj):
+    def get_unread(self, obj):
         if isinstance(obj, Group):
-            data = {}
-            for members in obj.members.all():
-                data[members.participant.username] = GroupMessages.manage.get_group_unread(obj, members.participant)
-            return data
-
-    def get_memberscount(self, obj):
-        return obj.members.count()
+            return GroupMessages.manage.get_group_unread(obj, self.context["request"].user)
 
 
 class AlbumSerializer(serializers.RelatedField):
@@ -84,7 +77,7 @@ class MessageReplySerializer(serializers.ModelSerializer):
         ]
 
 
-class RoomMessageSerializers(serializers.Serializer):
+class MessageSerializers(serializers.Serializer):
     sender = UserInfoSerializer()
     msg = serializers.CharField()
     created_at = serializers.DateTimeField(format='%H:%M')
@@ -102,32 +95,18 @@ class RoomMessageSerializers(serializers.Serializer):
         ]
 
     def get_read(self, obj):
-        user2 = obj.room.user1
-        if obj.room.user1 == self.context["request"].user:
-            user2 = obj.room.user2
-        return user2 in obj.read.all()
+        if isinstance(obj, PrivateMessage):
+            user2 = obj.room.user1
+            if obj.room.user1 == self.context["request"]["user"]:
+                user2 = obj.room.user2
+            return user2 in obj.read.all()
 
     def get_dropdown(self, obj):
-        if obj.images.all():
-            return False
-        return True
-
-
-class GroupMessageSerializer(serializers.Serializer):
-    sender = UserInfoSerializer(read_only=True)
-    msg = serializers.CharField()
-    created_at = serializers.DateTimeField(format='%H:%M')
-    dropdown = serializers.BooleanField(default=True)
-    images = AlbumSerializer(many=True, read_only=True)
-    files = FileSerializer(many=True, read_only=True)
-    reply = MessageReplySerializer()
-    id = serializers.IntegerField(read_only=True)
-
-    class Meta:
-        model = GroupMessages
-        fields = [
-            'sender', 'id', 'msg', 'reply', 'created_at', 'images', 'files', 'dropdown'
-        ]
+        if isinstance(obj, PrivateMessage):
+            if obj.images.all():
+                return False
+            return True
+        return False
 
 
 class HomeFeedSerializers(serializers.Serializer):
