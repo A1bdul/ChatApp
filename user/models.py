@@ -1,6 +1,7 @@
 import uuid
 
-from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.contrib.auth.base_user import AbstractBaseUser
+from django.contrib.auth.models import BaseUserManager, PermissionsMixin
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
@@ -8,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 
 # Create your models here.
 class UserManager(BaseUserManager):
-    def create_user(self, email, password, **extra_fields):
+    def create_user(self, email, first_name, last_name, password=None, **extra_fields):
         if not email:
             raise ValueError(_('Email account is needed'))
 
@@ -16,13 +17,13 @@ class UserManager(BaseUserManager):
             raise ValueError(_('Email account is needed'))
 
         email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
+        user = self.model(email=email, first_name=first_name, last_name=last_name)
         user.set_password(password)
         user.save()
         Profile.objects.create(user=user)
         return user
 
-    def create_superuser(self, email,  password, **extra_fields):
+    def create_superuser(self, email, first_name, last_name, password, **extra_fields):
         if extra_fields.get('is_staff') is not True:
             extra_fields['is_staff'] = True
 
@@ -32,10 +33,10 @@ class UserManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             extra_fields['is_superuser'] = True
 
-        return self.create_user(email, password, **extra_fields)
+        return self.create_user(email, first_name, last_name, password, **extra_fields)
 
 
-class User(AbstractUser):
+class User(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
     first_name = models.CharField(max_length=200, blank=True, null=True)
     last_name = models.CharField(max_length=200, blank=True, null=True)
@@ -61,8 +62,8 @@ class ChatRoomManager(models.Manager):
     def get_or_create_room(self, u1, u2):
         is_room = ChatRoom.objects.filter(Q(user1=u1, user2=u2) | Q(user2=u1, user1=u2)).first()
         if not is_room:
-            return ChatRoom.objects.create(user1=u1, user2=u2)
-        return is_room
+            return ChatRoom.objects.create(user1=u1, user2=u2), True
+        return is_room, False
 
     def get_connected_users(self, user):
         rooms = ChatRoom.objects.filter(Q(user1=user) | Q(user2=user))

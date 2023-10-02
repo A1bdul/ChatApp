@@ -17,11 +17,19 @@ class ChatRoomSerializers(serializers.ModelSerializer):
         ]
 
     def get_unread(self, obj):
-        return PrivateMessage.manage.get_unread(obj, self.context["request"].user)
+        try:
+            user = self.context["request"]["user"]
+        except TypeError:
+            user = self.context["request"].user
+        return PrivateMessage.manage.get_unread(obj, user)
 
     def get_user2(self, obj):
+        try:
+            user = self.context["request"]["user"]
+        except TypeError:
+            user = self.context["request"].user
         response = UserInfoSerializer(obj.user1, read_only=True)
-        if obj.user1 == self.context["request"].user:
+        if obj.user1 == user:
             response = UserInfoSerializer(obj.user2, read_only=True)
         return response.data
 
@@ -31,7 +39,7 @@ class MemberSerializer(serializers.ModelSerializer):
         Serialize group chat members information, will be used in other  class
         serializers
     """
-    participant = UserInfoSerializer(read_only=True)
+    participant = UserInfoSerializer()
 
     class Meta:
         model = Member
@@ -41,19 +49,31 @@ class MemberSerializer(serializers.ModelSerializer):
 
 
 class GroupRoomSerializer(serializers.ModelSerializer):
-    members = MemberSerializer(many=True)
-    unread = serializers.SerializerMethodField()
-    id = serializers.UUIDField()
+    members = MemberSerializer(many=True, required=False)
+    unread = serializers.SerializerMethodField(required=False)
+    id = serializers.UUIDField(required=False)
+    description = serializers.CharField()
+    groupMembers = serializers.ListField(required=False)
 
     class Meta:
         model = Group
         fields = [
-            'members', 'name', 'icon', 'id', 'unread'
+            'members', 'name', 'icon', 'id', 'unread', 'description', 'groupMembers'
         ]
+
+    def create(self, validated_data):
+        instance = Group.objects.create(name=validated_data.get("name"), description=validated_data.get("description"))
+        for member in validated_data.get("groupMembers"):
+            instance.members.add(member)
+        return instance
 
     def get_unread(self, obj):
         if isinstance(obj, Group):
-            return GroupMessages.manage.get_group_unread(obj, self.context["request"].user)
+            try:
+                user = self.context["request"]["user"]
+            except TypeError:
+                user = self.context["request"].user
+            return GroupMessages.manage.get_group_unread(obj, user)
 
 
 class AlbumSerializer(serializers.RelatedField):

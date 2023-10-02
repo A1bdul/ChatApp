@@ -142,6 +142,10 @@ USE_TZ = True
 
 STATIC_URL = '/assets/'
 
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'assets')
+]
+
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.getenv('cloud_name'),
     'API_KEY': os.getenv('api_key'),

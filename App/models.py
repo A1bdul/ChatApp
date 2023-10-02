@@ -93,7 +93,7 @@ class Group(BaseModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
     icon = models.ImageField(blank=True, null=True)
     name = models.CharField(max_length=200)
-    members = models.ManyToManyField(Member, blank=False)
+    members = models.ManyToManyField(Member, blank=False, unique=False)
     description = models.TextField(max_length=2048)
     connected_users = models.ManyToManyField(Member, related_name='connected_members')
 
