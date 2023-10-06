@@ -37,11 +37,12 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True, blank=True)
     first_name = models.CharField(max_length=200, blank=True, null=True)
     last_name = models.CharField(max_length=200, blank=True, null=True)
     email = models.CharField(max_length=200, unique=True, blank=True, null=True)
     password = models.CharField(max_length=200)
+    is_active = models.BooleanField(default=True)
 
     contacts = models.ManyToManyField('self', symmetrical=False, related_name='contact', blank=True)
     objects = UserManager()
@@ -77,8 +78,8 @@ class ChatRoomManager(models.Manager):
 
 
 class ChatRoom(models.Model):
-    user1 = models.ForeignKey(User, null=True, blank=True, related_name='user1', on_delete=models.SET_NULL)
-    user2 = models.ForeignKey(User, blank=True, null=True, related_name='user2', on_delete=models.SET_NULL)
+    user1 = models.ForeignKey(User, null=True, blank=True, related_name='user1', on_delete=models.CASCADE)
+    user2 = models.ForeignKey(User, blank=True, null=True, related_name='user2', on_delete=models.CASCADE)
     connected_users = models.ManyToManyField(User, related_name='connected_user')
 
     objects = models.Manager()

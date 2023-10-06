@@ -4,6 +4,16 @@ from rest_framework.validators import UniqueValidator
 
 from .models import User, Profile
 
+from djoser import serializers as djs
+
+
+class UserCreateSerializer(djs.UserCreateSerializer):
+    class Meta(djs.UserCreateSerializer.Meta):
+        model = User
+        fields = [
+            'email', 'first_name', 'last_name', 'password'
+        ]
+
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:

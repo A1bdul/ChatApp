@@ -178,19 +178,36 @@ CORS_ALLOWED_ORIGINS = [
     "http://192.168.43.81:5173"
 ]
 
-DJOSER = {
-    'USER_ID_FIELD': 'id',
-    'LOGIN_FIELD': 'email',
-    'SEND_ACTIVATION_EMAIL': True,
-    'ACTIVATION_URL': 'auth/activate/{uid}/{token}',
-}
-
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-SITE_NAME = 'ChatApp'
 
 SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
     'ACCESS_TOKEN_LIFETIME': datetime.timedelta(hours=5),
     'REFRESH_TOKEN_LIFETIME': datetime.timedelta(hours=10),
+    'AUTH_TOKEN_CLASSES': [
+        'rest_framework_simplejwt.tokens.AccessToken'
+    ]
 }
 
+
+DOMAIN = "localhost:5173"
+
+SITE_NAME = 'ChatApp'
+
+ACCOUNT_SERIALIZER = 'user.serializers.UserCreateSerializer'
+
+DJOSER = {
+    'LOGIN_FIELD': 'email',
+    'USER_CREATE_PASSWORD_RETYPE': True,
+    'PASSWORD_CHANGED_EMAIL_CONFIRMATION': True,
+    'SEND_CONFIRMATION_EMAIL': True,
+    'SET_PASSWORD_RETYPE': True,
+    'PASSWORD_RESET_CONFIRM_URL': 'password/reset/confirm/{uid}/{token}',
+    'ACTIVATION_URL': 'account/activate/{uid}/{token}',
+    'SEND_ACTIVATION_EMAIL': True,
+    'SERIALIZERS': {
+        'user_create': ACCOUNT_SERIALIZER,
+        'user': ACCOUNT_SERIALIZER,
+        'current_user': ACCOUNT_SERIALIZER
+    }
+}
