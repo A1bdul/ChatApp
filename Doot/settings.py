@@ -87,12 +87,26 @@ ASGI_APPLICATION = 'Doot.asgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+try:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": "marketplace",
+            "USER": "abdxl",
+            "PASSWORD": "password",
+            "HOST": "localhost",
+            "PORT": "",
+        }
     }
-}
+except OperationalError as e:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+
+DATABASES["default"] = dj_database_url.parse(str(os.getenv("DATABASE_URL")))
 
 CHANNEL_LAYERS = {
     'default': {
