@@ -34,11 +34,21 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin', 'django.contrib.auth',
-    'django.contrib.contenttypes', 'django.contrib.sessions',
-    'django.contrib.messages', 'django.contrib.staticfiles', 'rest_framework',
-    'rest_framework_simplejwt', 'channels', 'cloudinary', 'djoser',
-    'user.apps.UserConfig', 'App', 'notification', 'corsheaders'
+    'django.contrib.admin', 
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'channels',
+'cloudinary',
+    'djoser',
+    'user.apps.UserConfig',
+    'App',
+    'notification', 
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
