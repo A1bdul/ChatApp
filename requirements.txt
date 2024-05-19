@@ -3,6 +3,7 @@
 asgiref
 channels
 cloudinary
+django-cors-headers
 Django
 djangorestframework
 djangorestframework-simplejwt
@@ -13,3 +14,5 @@ sqlparse
 gunicorn
 dj-database-url
 psycopg2
+whitenoise
+
