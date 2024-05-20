@@ -83,22 +83,22 @@ try:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": "marketplace",
-            "USER": "abdxl",
-            "PASSWORD": "password",
-            "HOST": "localhost",
-            "PORT": "",
+            "NAME": os.getenv("DATABASE_NAME"),
+            "USER": os.getenv("DATABASE_USER"),
+            "PASSWORD": os.getenv("DATABASE_PASSWORD"),
+            "HOST": os.getenv("DATABASE_HOST"),
+            "PORT": os.getenv("DATABASE_PORT")
         }
     }
 except OperationalError as e:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3"
         }
     }
 
-DATABASES["default"] = dj_database_url.parse(str(os.getenv("DATABASE_URL")))
+# DATABASES["default"] = dj_database_url.parse(str(os.getenv("DATABASE_URL")))
 
 CHANNEL_LAYERS = {
     'default': {
@@ -228,3 +228,4 @@ DJOSER = {
         'current_user': ACCOUNT_SERIALIZER
     }
 }
+
