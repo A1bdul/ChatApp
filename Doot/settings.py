@@ -34,21 +34,11 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin', 
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'rest_framework',
-    'rest_framework_simplejwt',
-    'channels',
-'cloudinary',
-    'djoser',
-    'user.apps.UserConfig',
-    'App',
-    'notification', 
-    'corsheaders'
+    'django.contrib.admin', 'django.contrib.auth',
+    'django.contrib.contenttypes', 'django.contrib.sessions',
+    'django.contrib.messages', 'django.contrib.staticfiles', 'rest_framework',
+    'rest_framework_simplejwt', 'channels', 'cloudinary', 'djoser',
+    'user.apps.UserConfig', 'App', 'notification', 'corsheaders'
 ]
 
 MIDDLEWARE = [
@@ -205,6 +195,10 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = os.getenv("EMAIL_HOST")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+EMAIL_PORT = os.getenv("EMAIL_PORT")
 
 SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer', ),
